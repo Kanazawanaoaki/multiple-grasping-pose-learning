@@ -178,7 +178,7 @@ public:
       }
     
     else
-      ROS_INFO("Undefined command %d ", message.data.c_str());
+      ROS_INFO("Undefined command %s ", message.data.c_str());
   }
     
   void camera_info_cb(const sensor_msgs::CameraInfoPtr& camInfo)
