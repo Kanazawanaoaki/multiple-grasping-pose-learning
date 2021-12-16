@@ -66,13 +66,13 @@ public:
   {
     //publish and subscribe
 
-    rgb_sub.subscribe(nh_, "/openni_camera/rgb/image_rect_color", 1);
-    depth_sub.subscribe(nh_, "/openni_camera/depth_registered/hw_registered/image_rect_raw", 1);
+    rgb_sub.subscribe(nh_, "input_rgb", 1);
+    depth_sub.subscribe(nh_, "input_depth", 1);
     sync_input_2_ = new message_filters::Synchronizer<message_filters::sync_policies::ApproximateTime< sensor_msgs::Image,sensor_msgs::Image> >(10);
     sync_input_2_->connectInput(rgb_sub,depth_sub);
     sync_input_2_->registerCallback(boost::bind(&aero_goods_grasping_demo::callback, this, _1, _2));
     
-    camera_info_sub = nh_.subscribe("/openni_camera/depth_registered/camera_info",1, &aero_goods_grasping_demo::camera_info_cb,this);
+    camera_info_sub = nh_.subscribe("cam_info",1, &aero_goods_grasping_demo::camera_info_cb,this);
     my_pointcloud_pub = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB> > ("myoutput", 1);
 
     new_object_sub = nh_.subscribe("/aero_data_collection",1, &aero_goods_grasping_demo::new_object_cb,this);

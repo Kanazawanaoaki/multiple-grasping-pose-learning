@@ -1,0 +1,8 @@
+<launch>
+  <node pkg="multiple_grasping_pose_learning" name="multiple_grasping_pose_learning" type="data_collection_turntable" output="screen">
+    <remap from="~input_rgb" to="/kinect_head/rgb/image_rect_color" />
+    <remap from="~input_depth" to="/kinect_head/depth_registered/hw_registered/image_rect_raw" />
+    <remap from="~cam_info" to="/kinect_head/depth_registered/camera_info" />
+    <param name="start_obj_num" value="1" />
+  </node>
+</launch>
