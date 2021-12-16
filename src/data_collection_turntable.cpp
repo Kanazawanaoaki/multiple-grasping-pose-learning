@@ -91,21 +91,39 @@ public:
     
     object_counter_ = start_obj_num;
     ROS_INFO("start collecting object from num %i", object_counter_);
-    base_dir = ros::package::getPath("multiple_grasping_pose_learning");
-    string rgb_data_dir_prefix = base_dir + "/dataset/rgb";
-    string mask_data_dir_prefix = base_dir + "/dataset/mask";
-    string pointcloud_data_dir_prefix  = base_dir + "/dataset/pointcloud";
+    base_dir = ros::package::getPath("multiple_grasping_pose_learning")+"/dataset";
+    string rgb_data_dir_prefix = base_dir + "/rgb";
+    string mask_data_dir_prefix = base_dir + "/mask";
+    string pointcloud_data_dir_prefix  = base_dir + "/pointcloud";
     char object_num[10];	
+    if(!IsdirExist(rgb_data_dir_prefix.c_str())){
+      mkdir(rgb_data_dir_prefix.c_str(),0777);
+      ROS_INFO("make new dir in %s", rgb_data_dir_prefix.c_str());
+    }
+    if(!IsdirExist(mask_data_dir_prefix.c_str())){
+      mkdir(mask_data_dir_prefix.c_str(),0777);
+      ROS_INFO("make new dir in %s", mask_data_dir_prefix.c_str());
+    }
+    if(!IsdirExist(pointcloud_data_dir_prefix.c_str())){
+      mkdir(pointcloud_data_dir_prefix.c_str(),0777);
+      ROS_INFO("make new dir in %s", pointcloud_data_dir_prefix.c_str());
+    }
     sprintf(object_num,"/%02d/", object_counter_);
     rgb_data_dir = rgb_data_dir_prefix + object_num;
     mask_data_dir = mask_data_dir_prefix + object_num;
     pointcloud_data_dir = pointcloud_data_dir_prefix + object_num;
-    if(!IsdirExist(rgb_data_dir.c_str()))
+    if(!IsdirExist(rgb_data_dir.c_str())){
       mkdir(rgb_data_dir.c_str(),0777);
-    if(!IsdirExist(mask_data_dir.c_str()))
+      ROS_INFO("make new dir in %s", rgb_data_dir.c_str());
+    }
+    if(!IsdirExist(mask_data_dir.c_str())){
       mkdir(mask_data_dir.c_str(),0777);
-    if(!IsdirExist(pointcloud_data_dir.c_str()))
+      ROS_INFO("make new dir in %s", mask_data_dir.c_str());
+    }
+    if(!IsdirExist(pointcloud_data_dir.c_str())){
       mkdir(pointcloud_data_dir.c_str(),0777);
+      ROS_INFO("make new dir in %s", pointcloud_data_dir.c_str());
+    }
 
   }
   
@@ -139,12 +157,18 @@ public:
 	pointcloud_data_dir = pointcloud_data_dir_prefix + object_num;
 
 	
-	if(!IsdirExist(rgb_data_dir.c_str()))
+	if(!IsdirExist(rgb_data_dir.c_str())){
 	  mkdir(rgb_data_dir.c_str(),0777);
-	if(!IsdirExist(mask_data_dir.c_str()))
+	  ROS_INFO("make new dir in %s", rgb_data_dir.c_str());
+	}
+	if(!IsdirExist(mask_data_dir.c_str())){
 	  mkdir(mask_data_dir.c_str(),0777);
-	if(!IsdirExist(pointcloud_data_dir.c_str()))
+	  ROS_INFO("make new dir in %s", mask_data_dir.c_str());
+	}
+	if(!IsdirExist(pointcloud_data_dir.c_str())){
 	  mkdir(pointcloud_data_dir.c_str(),0777);
+	  ROS_INFO("make new dir in %s", pointcloud_data_dir.c_str());
+	}
 
       }
     else if(message.data=="do again")
@@ -154,7 +178,7 @@ public:
       }
     
     else
-      ROS_INFO("Undefined command %s ", message.data.c_str());
+      ROS_INFO("Undefined command %d ", message.data.c_str());
   }
     
   void camera_info_cb(const sensor_msgs::CameraInfoPtr& camInfo)
@@ -349,7 +373,8 @@ public:
 	// move the point cloud to coordinate origin before saving
 	pcl::PointCloud<PCType>::Ptr cloud_centered = move_point_cloud_to_origin(cloud_cropped); 
 	ply_saver.write(pointcloud_path,*cloud_centered);
-	ROS_INFO("pointcloud is saved");
+	// ROS_INFO("pointcloud is saved");
+	ROS_INFO("pointcloud is saved in %s", pointcloud_path.c_str());
 	//back project pointcloud to 2d mask
 	pcl::PointCloud<PCType>::Ptr cloud_trans_back(new pcl::PointCloud<PCType>());
 	pcl_ros::transformPointCloud(robot_camera_frame_, *object_cloud, *cloud_trans_back, listener_);
@@ -571,7 +596,9 @@ public:
     cv::imwrite(rgb_path,current_RGBImg_);
     cv::imwrite(mask_path,obj_mask);
     data_counter_++;
-    ROS_INFO("images are saved");
+    // ROS_INFO("images are saved");
+    ROS_INFO("rgb image is saved in %s", rgb_path.c_str());
+    ROS_INFO("mask image is saved in %s", mask_path.c_str());
     return true;
   }
   
