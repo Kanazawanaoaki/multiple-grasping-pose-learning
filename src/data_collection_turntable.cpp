@@ -96,48 +96,40 @@ public:
     string mask_data_dir_prefix = base_dir + "/mask";
     string pointcloud_data_dir_prefix  = base_dir + "/pointcloud";
     char object_num[10];	
-    if(!IsdirExist(rgb_data_dir_prefix.c_str())){
-      mkdir(rgb_data_dir_prefix.c_str(),0777);
-      ROS_INFO("make new dir in %s", rgb_data_dir_prefix.c_str());
-    }
-    if(!IsdirExist(mask_data_dir_prefix.c_str())){
-      mkdir(mask_data_dir_prefix.c_str(),0777);
-      ROS_INFO("make new dir in %s", mask_data_dir_prefix.c_str());
-    }
-    if(!IsdirExist(pointcloud_data_dir_prefix.c_str())){
-      mkdir(pointcloud_data_dir_prefix.c_str(),0777);
-      ROS_INFO("make new dir in %s", pointcloud_data_dir_prefix.c_str());
-    }
+    if(!IsdirExist(rgb_data_dir_prefix.c_str()))
+      MakeDir(rgb_data_dir_prefix.c_str());
+    if(!IsdirExist(mask_data_dir_prefix.c_str()))
+      MakeDir(mask_data_dir_prefix.c_str());
+    if(!IsdirExist(pointcloud_data_dir_prefix.c_str()))
+      MakeDir(pointcloud_data_dir_prefix.c_str());
     sprintf(object_num,"/%02d/", object_counter_);
     rgb_data_dir = rgb_data_dir_prefix + object_num;
     mask_data_dir = mask_data_dir_prefix + object_num;
     pointcloud_data_dir = pointcloud_data_dir_prefix + object_num;
-    if(!IsdirExist(rgb_data_dir.c_str())){
-      mkdir(rgb_data_dir.c_str(),0777);
-      ROS_INFO("make new dir in %s", rgb_data_dir.c_str());
-    }
-    if(!IsdirExist(mask_data_dir.c_str())){
-      mkdir(mask_data_dir.c_str(),0777);
-      ROS_INFO("make new dir in %s", mask_data_dir.c_str());
-    }
-    if(!IsdirExist(pointcloud_data_dir.c_str())){
-      mkdir(pointcloud_data_dir.c_str(),0777);
-      ROS_INFO("make new dir in %s", pointcloud_data_dir.c_str());
-    }
-
+    if(!IsdirExist(rgb_data_dir.c_str()))
+      MakeDir(rgb_data_dir.c_str());
+    if(!IsdirExist(mask_data_dir.c_str()))
+      MakeDir(mask_data_dir.c_str());
+    if(!IsdirExist(pointcloud_data_dir.c_str()))
+      MakeDir(pointcloud_data_dir.c_str());
   }
   
   int IsdirExist(const char *path)
-{
+  {
     struct stat info;
     if(stat( path, &info ) != 0)
-        return 0;
+      return 0;
     else if(info.st_mode & S_IFDIR)
-        return 1;
+      return 1;
     else
-        return 0;
-}
+      return 0;
+  }
 
+  void MakeDir(const char *path)
+  {
+    mkdir(path,0777);
+    ROS_INFO("make new dir in %s", path);
+  }
 
   void new_object_cb(const std_msgs::String &message)
   {
@@ -157,19 +149,12 @@ public:
 	pointcloud_data_dir = pointcloud_data_dir_prefix + object_num;
 
 	
-	if(!IsdirExist(rgb_data_dir.c_str())){
-	  mkdir(rgb_data_dir.c_str(),0777);
-	  ROS_INFO("make new dir in %s", rgb_data_dir.c_str());
-	}
-	if(!IsdirExist(mask_data_dir.c_str())){
-	  mkdir(mask_data_dir.c_str(),0777);
-	  ROS_INFO("make new dir in %s", mask_data_dir.c_str());
-	}
-	if(!IsdirExist(pointcloud_data_dir.c_str())){
-	  mkdir(pointcloud_data_dir.c_str(),0777);
-	  ROS_INFO("make new dir in %s", pointcloud_data_dir.c_str());
-	}
-
+	if(!IsdirExist(rgb_data_dir.c_str()))
+	  MakeDir(rgb_data_dir.c_str());
+	if(!IsdirExist(mask_data_dir.c_str()))
+	  MakeDir(mask_data_dir.c_str());
+	if(!IsdirExist(pointcloud_data_dir.c_str()))
+	  MakeDir(pointcloud_data_dir.c_str());
       }
     else if(message.data=="do again")
       {
@@ -478,7 +463,7 @@ public:
 	bbox_3d[0] = cv::Point3f(min_x,min_y,maxpt.z);//bbox should be higher than the table
 	bbox_3d.push_back(cv::Point3f(max_x,max_y,maxpt.z+0.6));//we do not care max_z
       }
-	return bbox_3d;
+    return bbox_3d;
   }
 
   pcl::PointCloud<PCType>::Ptr move_point_cloud_to_origin(pcl::PointCloud<PCType>::Ptr cloud)
