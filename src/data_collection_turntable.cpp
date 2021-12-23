@@ -37,6 +37,7 @@ public:
   ros::Publisher my_pointcloud_pub;
   ros::ServiceServer systemService;
   ros::ServiceServer saveImageService;
+  ros::ServiceServer saveSingleRgbImageService;
 
   float fx;
   float fy;
@@ -80,6 +81,7 @@ public:
     //services
     systemService = nh_.advertiseService("/aero_goods_grasping_demo", &aero_goods_grasping_demo::srvCb, this);
     saveImageService = nh_.advertiseService("/aero_new_image_collection", &aero_goods_grasping_demo::saveImgSrvCb, this);
+    saveSingleRgbImageService = nh_.advertiseService("/aero_new_single_rgb_image_collection", &aero_goods_grasping_demo::saveSingleRgbImgSrvCb, this);
 
     robot_base_frame_ = "/base_link";
     data_counter_ = 0;
@@ -584,6 +586,19 @@ public:
     // ROS_INFO("images are saved");
     ROS_INFO("rgb image is saved in %s", rgb_path.c_str());
     ROS_INFO("mask image is saved in %s", mask_path.c_str());
+    return true;
+  }
+
+  bool saveSingleRgbImgSrvCb(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res)
+  {
+    char suffix[30];
+    //char maskfilename[30];
+    sprintf(suffix,"frame%02d.jpg", data_counter_);
+    //sprintf(maskfilename,"framemask%02d.jpg", data_counter_);
+    std::string rgb_path = rgb_data_dir + suffix;
+    cv::imwrite(rgb_path,current_RGBImg_);
+    data_counter_++;
+    ROS_INFO("images are saved");
     return true;
   }
   
