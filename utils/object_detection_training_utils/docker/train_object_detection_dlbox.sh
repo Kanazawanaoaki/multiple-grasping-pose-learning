@@ -16,13 +16,14 @@ DATASET_DIR=$(realpath $1); shift 1;
 DATASET_NAME=$(basename $DATASET_DIR)
 echo $DATASET_DIR
 
-ITERATION_TIMES=2000
+ITERATION_TIMES=3000
 
 DATE=$(date +"%Y%m%d-%H%M%S")
 DATASET_NAME_NEW=$DATE-$ITERATION_TIMES-$DATASET_NAME
 
 ## DLBOX use personal user id currently
-DLBOX_IP=shifan@dlbox6.jsk.imi.i.u-tokyo.ac.jp
+# DLBOX_IP=kanazawa@kanazawa-hp-z800-workstation.jsk.imi.i.u-tokyo.ac.jp
+DLBOX_IP=133.11.216.122
 
 set -x
 scp -q -r $DATASET_DIR $DLBOX_IP:~/$DATASET_NAME_NEW
