@@ -32,7 +32,7 @@
       subsample_value: 0.0
     </rosparam>
     <rosparam command="load"
-              file="$(find detect_cans_in_fridge_201202)/config/self_filter.yaml" />
+              file="$(find multiple_grasping_pose_learning)/config/self_filter.yaml" />
   </node>
 
   <!-- <node pkg="robot_self_filter_color" type="self_filter_color" -->
@@ -58,6 +58,6 @@
   <group if="$(arg gui)">
     <node name="rviz"
           pkg="rviz" type="rviz"
-          args="-d $(find multiple_grasping_pose_learning)/config/robot_self_filter.config.rviz"/>
+          args="-d $(find multiple_grasping_pose_learning)/config/robot_self_filter.rviz"/>
   </group>
 </launch>

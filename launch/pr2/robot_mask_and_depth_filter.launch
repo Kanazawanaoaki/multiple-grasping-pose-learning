@@ -1,0 +1,49 @@
+<launch>
+
+  <arg name="gui" default="true"/>
+  <arg name="is_rosbag" default="false"/>
+  <arg name="INPUT_IMAGE" default="/kinect_head/rgb/image_rect_color"/>
+  <arg name="INPUT_DEPTH_IMAGE" default="/kinect_head/depth_registered/hw_registered/image_rect_raw"/>
+  <arg name="DEPTH_INFO" default="/kinect_head/depth_registered/camera_info"/>
+
+  <include file="$(find multiple_grasping_pose_learning)/launch/pr2/robot_to_mask_image.launch">
+    <arg name="gui" value="false"/>
+    <arg name="is_rosbag" value="$(arg is_rosbag)"/>    
+    <arg name="CAM_INFO" value="$(arg DEPTH_INFO)"/>  
+    <arg name="INPUT_IMAGE" value="$(arg INPUT_DEPTH_IMAGE)"/>  
+  </include>
+
+  <include file="$(find multiple_grasping_pose_learning)/launch/pr2/depth_image_filter.launch">
+    <arg name="gui" value="false"/>
+    <arg name="INPUT_IMAGE" value="$(arg INPUT_IMAGE)"/>
+    <!-- <arg name="INPUT_DEPTH_IMAGE" value="$(arg INPUT_DEPTH_IMAGE)"/> -->
+    <arg name="INPUT_DEPTH_IMAGE" value="robot_to_mask_image/apply_mask_image/output"/>
+  </include>
+
+  <group if="$(arg gui)">
+    <node name="rviz"
+          pkg="rviz" type="rviz"
+          args="-d $(find multiple_grasping_pose_learning)/config/robot_mask_and_depth_filter.rviz"/>
+    <!-- <node name="image_view00" -->
+    <!--       pkg="image_view" type="image_view" -->
+    <!--       clear_params="true"> -->
+    <!--   <remap from="image" to="depth_image_filter/output/mask" /> -->
+    <!-- </node> -->
+    <!-- <node name="image_view01" -->
+    <!--       pkg="image_view" type="image_view" -->
+    <!--       clear_params="true"> -->
+    <!--   <remap from="image" to="depth_image_filter/apply_mask_image/output" /> -->
+    <!-- </node> -->
+    <!-- <node name="image_view02" -->
+    <!--       pkg="image_view" type="image_view" -->
+    <!--       clear_params="true"> -->
+    <!--   <remap from="image" to="robot_to_mask_image/output" /> -->
+    <!-- </node> -->
+    <!-- <node name="image_view03" -->
+    <!--       pkg="image_view" type="image_view" -->
+    <!--       clear_params="true"> -->
+    <!--   <remap from="image" to="robot_to_mask_image/apply_mask_image/output" /> -->
+    <!-- </node> -->
+  </group>
+
+</launch>
