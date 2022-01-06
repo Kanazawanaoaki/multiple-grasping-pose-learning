@@ -1,0 +1,102 @@
+<launch>
+
+  <arg name="gui" default="true"/>
+  <arg name="is_rosbag" default="false"/>
+  <arg name="INPUT_IMAGE" default="/kinect_head/rgb/image_rect_color"/>
+  <arg name="INPUT_DEPTH_IMAGE" default="/kinect_head/depth_registered/hw_registered/image_rect_raw"/>
+  <arg name="CAM_INFO" default="/kinect_head/rgb/camera_info"/>  
+
+  <!-- <include file="$(find multiple_grasping_pose_learning)/launch/pr2/robot_to_mask_image.launch"> -->
+  <!--   <arg name="gui" value="false"/> -->
+  <!--   <arg name="is_rosbag" value="$(arg is_rosbag)"/>     -->
+  <!--   <arg name="CAM_INFO" value="$(arg DEPTH_INFO)"/>   -->
+  <!--   <arg name="INPUT_IMAGE" value="$(arg INPUT_DEPTH_IMAGE)"/>   -->
+  <!-- </include> -->
+
+  <group if="$(arg is_rosbag)">
+    <param name="robot_description"
+           command="$(find xacro)/xacro.py '$(find pr2_description)/robots/pr2.urdf.xacro'"/>
+  </group>
+  
+  <node name="robot_to_mask_image"
+        pkg="nodelet" type="nodelet"
+        args="standalone jsk_perception/RobotToMaskImage">
+    <remap from="~input/camera_info" to="$(arg CAM_INFO)"/>
+    <rosparam>
+      self_see_links:
+        - name: base_link
+        - name: l_shoulder_pan_link
+        - name: l_shoulder_lift_link
+        - name: l_upper_arm_link
+        - name: l_upper_arm_roll_link
+        - name: l_elbow_flex_link
+        - name: l_forearm_link
+        - name: l_forearm_roll_link
+        - name: l_wrist_flex_link
+        - name: l_wrist_roll_link
+        - name: l_gripper_palm_link
+        - name: l_gripper_l_finger_link
+        - name: l_gripper_l_finger_tip_link
+        - name: l_gripper_r_finger_link
+        - name: l_gripper_r_finger_tip_link
+        - name: r_shoulder_pan_link
+        - name: r_shoulder_lift_link
+        - name: r_upper_arm_link
+        - name: r_upper_arm_roll_link
+        - name: r_elbow_flex_link
+        - name: r_forearm_link
+        - name: r_forearm_roll_link
+        - name: r_wrist_flex_link
+        - name: r_wrist_roll_link
+        - name: r_gripper_palm_link
+        - name: r_gripper_l_finger_link
+        - name: r_gripper_l_finger_tip_link
+        - name: r_gripper_r_finger_link
+        - name: r_gripper_r_finger_tip_link
+      self_see_default_padding: 0.0
+    </rosparam>
+  </node>
+
+  <node name="depth_image_filter"
+        pkg="jsk_perception" type="depth_image_filter.py"
+        clear_params="true"
+        output="screen" >
+    <remap from="~input" to="$(arg INPUT_DEPTH_IMAGE)" />
+    <rosparam subst_value="true">
+      threshold: 1.0
+    </rosparam>
+  </node>
+
+  <node name="multiply_mask_image"
+        pkg="jsk_perception" type="multiply_mask_image">
+    <remap from="~input/src1" to="robot_to_mask_image/output" />
+    <remap from="~input/src2" to="depth_image_filter/output/mask" />
+    <rosparam>
+      approximate_sync: true
+    </rosparam>
+  </node>  
+
+  <group ns="depth_image_filter" >
+    <node name="apply_mask_image"
+          pkg="nodelet" type="nodelet"
+          args="standalone jsk_perception/ApplyMaskImage">
+      <remap from="~input" to="$(arg INPUT_IMAGE)" />
+      <remap from="~input/mask" to="/multiply_mask_image/output" />
+      <rosparam>
+        approximate_sync: true
+        clip: false
+      </rosparam>
+    </node>
+  </group>
+
+  <group if="$(arg gui)">
+    <node name="rviz"
+          pkg="rviz" type="rviz"
+          args="-d $(find multiple_grasping_pose_learning)/config/multiply_robot_and_depth_mask.rviz"/>
+    <!-- <node name="image_view00" -->
+    <!--       pkg="image_view" type="image_view" -->
+    <!--       clear_params="true"> -->
+    <!--   <remap from="image" to="depth_image_filter/output/mask" /> -->
+  </group>
+
+</launch>
