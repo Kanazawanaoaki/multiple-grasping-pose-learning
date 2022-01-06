@@ -81,6 +81,8 @@
         args="/kinect_head/depth_registered/throttled/points /kinect_head/depth_registered/points" />
   <node name="quat_points_relay" pkg="topic_tools" type="relay"
         args="/kinect_head/depth_registered/quater/throttled/points /kinect_head/depth_registered/quater/points" />
+  <node name="depth_image_hw_relay" pkg="topic_tools" type="relay"
+        args="$(arg DEPTH_IMAGE) /kinect_head/depth_registered/hw_registered/image_rect_raw" />
 
   <!-- rosbag player -->
   <node pkg="rosbag" type="play" name="rosbag_play"
