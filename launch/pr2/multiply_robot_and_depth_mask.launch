@@ -6,13 +6,6 @@
   <arg name="INPUT_DEPTH_IMAGE" default="/kinect_head/depth_registered/hw_registered/image_rect_raw"/>
   <arg name="CAM_INFO" default="/kinect_head/rgb/camera_info"/>  
 
-  <!-- <include file="$(find multiple_grasping_pose_learning)/launch/pr2/robot_to_mask_image.launch"> -->
-  <!--   <arg name="gui" value="false"/> -->
-  <!--   <arg name="is_rosbag" value="$(arg is_rosbag)"/>     -->
-  <!--   <arg name="CAM_INFO" value="$(arg DEPTH_INFO)"/>   -->
-  <!--   <arg name="INPUT_IMAGE" value="$(arg INPUT_DEPTH_IMAGE)"/>   -->
-  <!-- </include> -->
-
   <group if="$(arg is_rosbag)">
     <param name="robot_description"
            command="$(find xacro)/xacro.py '$(find pr2_description)/robots/pr2.urdf.xacro'"/>
@@ -76,7 +69,7 @@
     </rosparam>
   </node>  
 
-  <group ns="depth_image_filter" >
+  <group ns="robot_and_depth_filter" >
     <node name="apply_mask_image"
           pkg="nodelet" type="nodelet"
           args="standalone jsk_perception/ApplyMaskImage">

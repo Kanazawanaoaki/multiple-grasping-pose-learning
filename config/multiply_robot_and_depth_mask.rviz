@@ -570,7 +570,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /depth_image_filter/apply_mask_image/output
+      Image Topic: /robot_and_depth_filter/apply_mask_image/output
       Max Value: 1
       Median window: 5
       Min Value: 0
