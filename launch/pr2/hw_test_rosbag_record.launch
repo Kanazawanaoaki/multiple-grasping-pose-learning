@@ -36,13 +36,8 @@
 	      /kinect_head/rgb/image_rect_color/compressed
 	      /kinect_head/depth_registered/camera_info
 	      /kinect_head/depth_registered/hw_registered/image_rect_raw/compressedDepth
-	      /prosilica/camera_info
-	      /prosilica/image_raw/compressed
 	      /right_endeffector/wrench
-	      /pr2_end_pose/right
 	      /left_endeffector/wrench
-	      /pr2_end_pose/left
-	      /smach_state_msg
               /audio"
         output="screen" />
 
