@@ -122,7 +122,7 @@
   (send *ri* :wait-interpolation)
   )
 
-(defun set-larm ()
+(defun receive-object-larm ()
   (send *co* :newcoords (make-coords :pos #f(578.018 60.941 1066.015) :rpy #f(-0.839 -0.613 0.499)))
   (send *robot* :larm :inverse-kinematics
 	*co*
@@ -130,6 +130,11 @@
 	:revert-if-fail nil)
   (send *ri* :angle-vector (send *robot* :angle-vector) 4000)
   (send *ri* :wait-interpolation)
+
+  (send *ri* :stop-grasp :larm :wait t)
+  (send *ri* :speak-jp "物体を握らせて下さい")
+  (unix:sleep 2)
+  (send *ri* :start-grasp :larm :wait t)
   )
 
 (defun look-around-larm (deg)
@@ -155,6 +160,17 @@
   ;; (send *ri* :speck-jp "データ収集を修了しました")
   )
 
+(defun look-around-larm-test ()
+  (receive-object-larm)
+
+  ;; (send *ri* :speck-jp "データ収集を開始します")
+  (dotimes (i 4)
+    (look-around-larm 90)
+    (unix:sleep 1);; 念の為
+    (save_data)
+    )
+  ;; (send *ri* :speck-jp "データ収集を修了しました")
+  )
 
 (setup)
 ;; (send *robot* :reset-pose)
