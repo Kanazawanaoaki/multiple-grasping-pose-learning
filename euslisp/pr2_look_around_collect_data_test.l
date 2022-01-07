@@ -2,10 +2,12 @@
 
 (ros::load-ros-manifest "roseus")
 (ros::load-ros-manifest "multiple_grasping_pose_learning")
+(ros::load-ros-manifest "std_srvs")
 (ros::roseus "collect_data_turntable")
 
 (format t "init")
 ;; (ros::wait-for-service "aero_goods_grasping_demo")
+(ros::wait-for-service "after_stow_data_collection/save_request")
 
 (defun setup()
   (load "package://pr2eus/pr2-interface.l")
@@ -64,6 +66,14 @@
   (setq *table_pose* (get_table))
   )
 
+;; kanazawa devel
+(defun save_data ()
+  ;; (let (res)
+  (setq req (instance std_srvs::TriggerRequest :init))
+  (setq res (ros::service-call "after_stow_data_collection/save_request" req t))
+  (format t "data saved! ~%")    
+    ;; )
+    )
 
 (defun dissoc-rcup ()
   (if (not (eql (send *rcup* :parent) nil))
@@ -94,11 +104,11 @@
   (send *ri* :wait-interpolation)
   
   (send *ri* :stop-grasp :rarm :wait t)
-  (send *ri* :speak-jp "コップを握らせて下さい")
+  (send *ri* :speak-jp "物体を握らせて下さい")
   (unix:sleep 2)
   (send *ri* :start-grasp :rarm :wait t)
   
-  (assoc-rcup)
+  ;; (assoc-rcup)
   )
 
 (defun look-around (deg)
@@ -133,78 +143,22 @@
   (send *ri* :wait-interpolation)
   )
 
-(defun place-object (coords) ;; objectをcoordsに置く
-  ;; 置く動作
-  (send *co* :newcoords (send coords :copy-worldcoords))
-  (send *co* :translate #f(-100 0 100))  
-  (send *robot* :rarm :inverse-kinematics
-	*co*
-	:move-target *rcup*
-        :rotation-axis t
-	:revert-if-fail nil)
-  (send *ri* :angle-vector (send *robot* :angle-vector) 4000)
-  (send *co* :translate #f(100 0 -100))  
-  (send *robot* :rarm :inverse-kinematics
-	*co*
-	:move-target *rcup*
-        :rotation-axis t
-	:revert-if-fail nil)
-  (send *ri* :angle-vector (send *robot* :angle-vector) 4000)
+(defun look-around-test ()
+  (receive-object)
 
-  ;; 離す
-  (send *ri* :stop-grasp :rarm :wait t)
-  (send (send *robot* :rarm :end-coords) :dissoc *rcup*)  
-  
-  (send *co* :newcoords (send (send *robot* :rarm :end-coords) :copy-worldcoords))
-  (send *co* :translate #f(-100 0 0))
-  (send *robot* :rarm :inverse-kinematics
-	*co*
-        :rotation-axis t
-	:revert-if-fail nil)
-  (send *ri* :angle-vector (send *robot* :angle-vector) 4000)
-  
-  ;; 初期姿勢に
-  (send *robot* :reset-manip-pose)
-  (send *ri* :angle-vector (send *robot* :angle-vector) 6000)
+  ;; (send *ri* :speck-jp "データ収集を開始します")
+  (dotimes (i 4)
+    (look-around 90)
+    (unix:sleep 1);; 念の為
+    (save_data)
+    )
+  ;; (send *ri* :speck-jp "データ収集を修了しました")
   )
 
-(defun pick-object (coords)
-  ;; 掴む動作
-  (dissoc-rcup)
-  (send *rcup* :newcoords (send coords :copy-worldcoords))
-  (send *co* :newcoords (send (send *rcup* :handle-handle0) :copy-worldcoords))
-  (send *co* :translate #f(-100 0 0))
-  (send *robot* :rarm :inverse-kinematics
-	*co*
-        :rotation-axis t
-	:revert-if-fail nil)
-  (send *ri* :angle-vector (send *robot* :angle-vector) 4000)
-  (send *co* :translate #f(100 0 0))
-  (send *robot* :rarm :inverse-kinematics
-	*co*
-        :rotation-axis t
-	:revert-if-fail nil)
-  (send *ri* :angle-vector (send *robot* :angle-vector) 4000)
-
-  ;; 離す
-  (send *ri* :stop-grasp :rarm :wait t)
-  (send (send *robot* :rarm :end-coords) :dissoc *rcup*)  
-  
-  (send *co* :newcoords (send (send *robot* :rarm :end-coords) :copy-worldcoords))
-  (send *co* :translate #f(-100 0 0))
-  (send *robot* :rarm :inverse-kinematics
-	*co*
-        :rotation-axis t
-	:revert-if-fail nil)
-  (send *ri* :angle-vector (send *robot* :angle-vector) 4000)
-  
-  ;; 初期姿勢に
-  (send *robot* :reset-manip-pose)
-  (send *ri* :angle-vector (send *robot* :angle-vector) 6000)  
-  )
 
 (setup)
 ;; (send *robot* :reset-pose)
 (send *robot* :reset-manip-pose)
 (send *ri* :angle-vector (send *robot* :angle-vector) 6000)
 (send *ri* :wait-interpolation)
+(warn "please run (look-around-test) ~%")

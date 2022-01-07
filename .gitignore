@@ -1,3 +1,4 @@
 /dataset/rgb/
 /dataset/mask/
 /dataset/pointcloud/
+/dataset/robot_depth_filter/

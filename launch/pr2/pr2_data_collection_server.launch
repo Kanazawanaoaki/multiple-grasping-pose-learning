@@ -1,0 +1,31 @@
+<launch>
+  <arg name="collect_data" default="true" />
+
+  <node name="after_stow_data_collection"
+        pkg="jsk_data" type="data_collection_server.py"
+        output="screen" if="$(arg collect_data)">
+    <rosparam subst_value="true">
+      message_filters: true
+      approximate_sync: true
+      <!-- message_filters: false -->
+      slop: 1.0
+      wait_save_request: true
+      method: request
+      save_dir: $(find multiple_grasping_pose_learning)/dataset/robot_depth_filter
+      method: request
+      topics:
+          - name: /kinect_head/rgb/image_rect_color
+            msg_class: sensor_msgs/Image
+            fname: rgb.jpg
+            savetype: ColorImage
+          - name: /multiply_mask_image/output
+            msg_class: sensor_msgs/Image
+            fname: mask.jpg
+            savetype: ColorImage
+          - name: /robot_and_depth_filter/apply_mask_image/output
+            msg_class: sensor_msgs/Image
+            fname: apply.jpg
+            savetype: ColorImage
+    </rosparam>
+  </node>
+</launch>
