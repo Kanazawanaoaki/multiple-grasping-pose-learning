@@ -178,3 +178,4 @@
 (send *ri* :angle-vector (send *robot* :angle-vector) 6000)
 (send *ri* :wait-interpolation)
 (warn "please run (look-around-test) ~%")
+(warn "please run (look-around-larm-test) ~%")
