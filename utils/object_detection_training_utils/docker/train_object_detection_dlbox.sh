@@ -23,7 +23,8 @@ DATASET_NAME_NEW=$DATE-$ITERATION_TIMES-$DATASET_NAME
 
 ## DLBOX use personal user id currently
 # DLBOX_IP=kanazawa@kanazawa-hp-z800-workstation.jsk.imi.i.u-tokyo.ac.jp
-DLBOX_IP=133.11.216.122
+# DLBOX_IP=133.11.216.122
+DLBOX_IP=morges
 
 set -x
 scp -q -r $DATASET_DIR $DLBOX_IP:~/$DATASET_NAME_NEW
