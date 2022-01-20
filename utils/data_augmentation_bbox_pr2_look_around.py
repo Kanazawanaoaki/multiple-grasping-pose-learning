@@ -207,6 +207,7 @@ if __name__ == "__main__":
     target_data_path = sys.argv[sys.argv.index("-t") + 1] if "-t" in sys.argv else "../dataset/robot_depth_filter/target"
     background_data_path = sys.argv[sys.argv.index("-b") + 1] if "-b" in sys.argv else "../dataset/background"
     augmented_data_path = sys.argv[sys.argv.index("-a") + 1] if "-a" in sys.argv else "../dataset/aug_data"
+    max_aug_obj_num = int(sys.argv[sys.argv.index("-n") + 1]) if "-n" in sys.argv else 3
     background_imgs = []    
     
     #load background image
@@ -218,7 +219,7 @@ if __name__ == "__main__":
     target_obj_labels = []
     target_obj_countour_points = []
     target_obj_roi_dimensions = []
-    cnt = -1
+    cnt = 0
     for obj_num in glob.glob(os.path.join(target_data_path, '*')):
         cnt += 1
         for datafile in glob.glob(os.path.join(obj_num, '*')):
@@ -287,5 +288,7 @@ if __name__ == "__main__":
     # # img_counter = data_generation(target_obj_rgbs,target_obj_masks,target_obj_labels,target_obj_countour_points,target_obj_roi_dimensions,4,250,img_counter)
 
     img_counter = data_generation(target_obj_rgbs,target_obj_masks,target_obj_labels,target_obj_countour_points,target_obj_roi_dimensions,1,300,0)
-    # img_counter = data_generation(target_obj_rgbs,target_obj_masks,target_obj_labels,target_obj_countour_points,target_obj_roi_dimensions,2,300,img_counter)
-    # img_counter = data_generation(target_obj_rgbs,target_obj_masks,target_obj_labels,target_obj_countour_points,target_obj_roi_dimensions,3,400,img_counter)
+    if max_aug_obj_num >= 2:
+        img_counter = data_generation(target_obj_rgbs,target_obj_masks,target_obj_labels,target_obj_countour_points,target_obj_roi_dimensions,2,300,img_counter)
+    if max_aug_obj_num >= 3:
+        img_counter = data_generation(target_obj_rgbs,target_obj_masks,target_obj_labels,target_obj_countour_points,target_obj_roi_dimensions,3,400,img_counter)
