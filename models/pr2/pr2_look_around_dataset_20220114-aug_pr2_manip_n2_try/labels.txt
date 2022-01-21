@@ -1,0 +1,8 @@
+1 alumi_bowl
+2 carrot
+3 dispenser
+4 fry
+5 green_bowl
+6 ladel
+7 peeler
+8 potato-peeler
