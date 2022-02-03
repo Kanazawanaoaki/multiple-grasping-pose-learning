@@ -36,7 +36,7 @@
 
 ;; manequine
 (ros::load-ros-manifest "pr2_mechanism_msgs")
-(ros::wait-for-service "/pr2_controller_manager/switch_controller")
+;; (ros::wait-for-service "/pr2_controller_manager/switch_controller")
 
 (defun manequine-mode (&key (arm (list "rarm")) (start t))
   (let ((req (instance pr2_mechanism_msgs::SwitchControllerRequest :init))
