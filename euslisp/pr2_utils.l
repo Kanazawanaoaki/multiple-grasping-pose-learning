@@ -1,0 +1,74 @@
+#!/usr/bin/env roseus
+
+;; (unless (boundp '*ri*)
+;;   (progn
+;;     (require :pr2-interface "package://pr2eus/pr2-interface.l")
+;;     (pr2-init)
+;;     )
+;;   )
+
+(ros::roseus "pr2_utils")
+
+;; dialog
+(ros::load-ros-manifest "speech_recognition_msgs")
+(setq *data-flag* nil)
+
+(defun voice-cb (msg)
+  (when msg
+    (setq *msg* msg)
+    (setq *data* (send *msg* :transcript))
+    (setq *data-flag* t)
+    (format t "data: ~A ~%" *data*)
+    )
+  )
+
+(defun dialogue-func ()
+  (ros::unsubscribe "/speech_to_text")
+  (setq *data-flag* nil)
+  (ros::subscribe "/speech_to_text" speech_recognition_msgs::SpeechRecognitionCandidates #'voice-cb)
+  (until *data-flag*
+         (ros::spin-once)
+         (ros::sleep)
+         )
+  (send *ri* :speak-jp "ありがとうございます")
+  (unix:sleep 1)
+  )
+
+;; manequine
+(ros::load-ros-manifest "pr2_mechanism_msgs")
+(ros::wait-for-service "/pr2_controller_manager/switch_controller")
+
+(defun manequine-mode (&key (arm (list "rarm")) (start t))
+  (let ((req (instance pr2_mechanism_msgs::SwitchControllerRequest :init))
+	(normal-controllers (list))
+	(loose-controllers (list))
+	)
+    (dolist (e arm)
+      (if (equal e "rarm")
+	  (progn
+	    (setq normal-controllers (append normal-controllers (list "r_arm_controller")))
+	    (setq loose-controllers (append loose-controllers (list "r_arm_controller_loose")))
+	    )
+	)
+      (if (equal e "larm")
+	  (progn
+	    (setq normal-controllers (append normal-controllers (list "l_arm_controller")))
+	    (setq loose-controllers (append loose-controllers (list "l_arm_controller_loose")))
+	    )
+	))
+    (if start
+	(progn
+	  (send req :start_controllers loose-controllers)
+	  (send req :stop_controllers normal-controllers)
+	  (format t "start ~A manequine mode! ~%" arm)
+	  )
+      (progn
+	(send req :start_controllers normal-controllers)
+	(send req :stop_controllers loose-controllers)
+	(format t "stop ~A manequine mode! ~%" arm)
+	)
+      )
+    (setq res (ros::service-call "/pr2_controller_manager/switch_controller" req))
+    (format t "controller service response: ~A ~%" (send res :ok))
+    ))
+
