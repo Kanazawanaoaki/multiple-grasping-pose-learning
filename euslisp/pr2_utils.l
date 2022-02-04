@@ -11,28 +11,55 @@
 
 ;; dialog
 (ros::load-ros-manifest "speech_recognition_msgs")
-(setq *data-flag* nil)
+(setq *voice-data-flag* nil)
 
 (defun voice-cb (msg)
   (when msg
     (setq *msg* msg)
-    (setq *data* (send *msg* :transcript))
-    (setq *data-flag* t)
-    (format t "data: ~A ~%" *data*)
+    (setq *voice-data* (send *msg* :transcript))
+    (setq *voice-data-flag* t)
+    (format t "voice-data: ~A ~%" *voice-data*)
     )
   )
 
 (defun dialogue-func ()
   (ros::unsubscribe "/speech_to_text")
-  (setq *data-flag* nil)
+  (setq *voice-data-flag* nil)
   (ros::subscribe "/speech_to_text" speech_recognition_msgs::SpeechRecognitionCandidates #'voice-cb)
-  (until *data-flag*
+  (until *voice-data-flag*
          (ros::spin-once)
          (ros::sleep)
          )
-  (send *ri* :speak-jp "ありがとうございます")
-  (unix:sleep 1)
+  ;; (send *ri* :speak-jp "ありがとうございます")
+  ;; (unix:sleep 1)
   )
+
+;; (setq *ok-flag* nil)
+;; (defun voice-ok-cb (msg)
+;;   (when msg
+;;     (setq *msg* msg)
+;;     (setq *data* (send *msg* :transcript))
+;;     (if (equal *data* '("OK"))
+;;         (progn
+;;           (format t "了解しました！ ~%" *data*)
+;;           (setq *ok-flag* t)
+;;           )
+;;       (format t "data: ~A ~%" *data*)
+;;       )
+;;     )
+;;   )
+
+;; (defun ok-wait ()
+;;   (ros::unsubscribe "/speech_to_text")
+;;   (setq *ok-flag* nil)
+;;   (ros::subscribe "/speech_to_text" speech_recognition_msgs::SpeechRecognitionCandidates #'voice-ok-cb)
+;;   (until *ok-flag*
+;;          (ros::spin-once)
+;;          (ros::sleep)
+;;          )
+;;   (send *ri* :speak-jp "ありがとうございます")
+;;   (unix:sleep *w-time*)
+;;   )
 
 ;; manequine
 (ros::load-ros-manifest "pr2_mechanism_msgs")
@@ -71,6 +98,14 @@
     (setq res (ros::service-call "/pr2_controller_manager/switch_controller" req))
     (format t "controller service response: ~A ~%" (send res :ok))
     ))
+
+(defun manequine-end ()
+  (manequine-mode :arm (list "rarm" "larm") :start nil) ;;マネキンoff
+  )
+
+(defun manequine-both ()
+  (manequine-mode :arm (list "rarm" "larm") :start t) ;;マネキンofn
+  )
 
 ;; data_collection
 (ros::load-ros-manifest "std_srvs")
