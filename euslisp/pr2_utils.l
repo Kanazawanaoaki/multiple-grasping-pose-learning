@@ -72,3 +72,20 @@
     (format t "controller service response: ~A ~%" (send res :ok))
     ))
 
+;; data_collection
+(ros::load-ros-manifest "std_srvs")
+
+(defun call-service (service req)
+  (if (ros::wait-for-service service 0)
+      (ros::service-call service req)
+    nil))
+
+(defun start-data-collection (&key (service "data_collection_rosbag_test/start_request"))
+  (setq req (instance std_srvs::TriggerRequest :init))
+  (setq res (ros::service-call service req t))
+  )
+
+(defun end-data-collection (&key (service "data_collection_rosbag_test/end_request"))
+  (setq req (instance std_srvs::TriggerRequest :init))
+  (setq res (ros::service-call service req t))
+  )
