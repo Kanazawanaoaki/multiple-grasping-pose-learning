@@ -95,7 +95,7 @@
   (send *ri* :wait-interpolation)
   
   (send *ri* :stop-grasp :rarm :wait t)
-  (send *ri* :speak-jp "コップを握らせて下さい")
+  (send *ri* :speak-jp "物体を握らせて下さい")
   (unix:sleep 3)
   (send *ri* :start-grasp :rarm :wait t)
   
@@ -177,8 +177,8 @@
   (manequine-end)
   (send *robot* :reset-manip-pose)
 
-  (send *pr2* :head-neck-y :joint-angle 0.0)
-  (send *pr2* :head-neck-p :joint-angle 60.0)
+  (send *robot* :head-neck-y :joint-angle 0.0)
+  (send *robot* :head-neck-p :joint-angle 60.0)
   
   (send *co* :newcoords (make-coords :pos #f(550 -200 900) :rpy #f(0 0 -1.571)))
   (send *robot* :rarm :inverse-kinematics
@@ -208,6 +208,8 @@
   
   (send *ri* :speak-jp "ありがとうございます")
   (manequine-end)
+  (send *robot* :head-neck-y :joint-angle 0.0)
+  (send *robot* :head-neck-p :joint-angle 60.0)
   (send *robot* :angle-vector (send *ri* :state :potentio-vector))
   (setq *initial-av* (send *robot* :angle-vector))
   (unix:sleep 2)
@@ -439,6 +441,7 @@
   ;; TODO 持ち上げる？
   
   (send *ri* :stop-grasp :rarm :wait t);; TODO 離す時のグリッパの離し具合？
+  (unix:sleep 2)
   
   ;; 離し方を実行する
   (replay-rav-list *release-rav-list*)
