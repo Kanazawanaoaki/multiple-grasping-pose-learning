@@ -173,6 +173,28 @@
   )
 
 ;; with teaching 
+(defun ok-wait ()
+  (setq *ok-flag* nil)
+  (until *ok-flag*
+	 (dialogue-func)
+	 (if (equal *voice-data* '("OK"))
+	     (progn
+	       (format t "了解しました！ ~%" *voice-data*)
+	       (setq *ok-flag* t)
+	       )
+	   (format t "data: ~A ~%" *voice-data*)
+	   ))
+
+  (send *ri* :speak-jp "ありがとうございます")
+  )
+
+(defun wait-ok-manequine()
+  ;; okと言われるまで待つ
+  (manequine-mode :arm (list "rarm") :start t)
+  (ok-wait)
+  (manequine-end)
+  )
+
 (defun initial-pose-teaching () ;; 道具を握らせて貰って初期姿勢を教わる
   (manequine-end)
   (send *robot* :reset-manip-pose)
@@ -193,21 +215,7 @@
   (send *ri* :speak-jp "物体の持ち方を教えて下さい")
   (unix:sleep 2)
   
-  ;; okと言われるまで待つ
-  (manequine-mode :arm (list "rarm") :start t)
-  (setq *ok-flag* nil)
-  (until *ok-flag*
-	 (dialogue-func)
-	 (if (equal *voice-data* '("OK"))
-	     (progn
-	       (format t "了解しました！ ~%" *voice-data*)
-	       (setq *ok-flag* t)
-	       )
-	   (format t "data: ~A ~%" *voice-data*)
-	   ))  
-  
-  (send *ri* :speak-jp "ありがとうございます")
-  (manequine-end)
+  (wait-ok-manequine);; OKと言われるまでマネキンモード
   (send *robot* :head-neck-y :joint-angle 0.0)
   (send *robot* :head-neck-p :joint-angle 60.0)
   (send *robot* :angle-vector (send *ri* :state :potentio-vector))
@@ -232,13 +240,98 @@
     )
   )
 
+(defun rav2rec (rav-list)
+  (setq tmp-av (send *robot* :angle-vector))
+  (format t "length of rav-list : ~A ~%" (length rav-list))
+
+  (setq rec-list (list))
+  (dolist (rav rav-list)
+    (send *robot* :rarm :angle-vector rav)
+    (setq now-rec (send (send *robot* :rarm :end-coords) :copy-worldcoords))
+    (setq rec-list (append rec-list (list now-rec)))
+    )
+  (send *robot* :angle-vector tmp-av)
+  rec-list)
+
+(defun assoc-rec-list (rec-list std-coords)
+  (setq new-rec-list (list))
+  (dolist (rec rec-list)
+    (setq new-rec (make-cascoords))
+    (send new-rec :newcoords (send rec :copy-worldcoords))
+    (print new-rec)
+    (send std-coords :assoc new-rec)
+    (setq new-rec-list (append new-rec-list (list new-rec)))
+    )
+  new-rec-list)
+
+(defun view-rec-list (rec-list)
+  (dolist (rec rec-list)
+    (send rec :draw-on :flush t)
+    )
+  )
+
+(defun random-coords (initial-cds &key (x 100) (y 50) (theta 30))
+  (setq ans-cds (send initial-cds :copy-worldcoords))
+  (setq x-num (random x))
+  (if (= (random 2) 1)
+      (setq x-num (* x-num -1)))
+  (setq y-num (random y))
+  (if (= (random 2) 1)
+      (setq y-num (* y-num -1)))
+  (setq theta-num (random theta))
+  (if (= (random 2) 1)
+      (setq theta-num (* theta-num -1)))
+  (send ans-cds :translate (float-vector x-num y-num 0) :world)
+  (send ans-cds :rotate (deg2rad theta-num) :z :world)
+  (setq *x-num* x-num)
+  (setq *y-num* y-num)
+  (setq *theta-num* theta-num)
+  ans-cds)
+
+(defun ik-check (rec-list)
+  (setq ik-flag t)
+  (setq tmp-av (send *robot* :angle-vector))
+  (dolist (rec rec-list)
+    (setq ik-res (send *robot* :rarm :inverse-kinematics
+		       rec
+		       ))
+    (if (equal ik-res nil)
+	(progn
+	  (setq ik-flag nil)
+	  (return-from ik-check nil)
+	  ))
+    )
+  (send *robot* :angle-vector tmp-av)
+  (format t "all ik solved ~%")
+  ik-flag
+  )
+
+(defun grasp-fail-check (no-obj-gri obj-gri)
+  (setq now-gri (send *ri* :state :gripper :rarm :position))
+  (setq no-obj-dis (abs (- now-gri no-obj-gri)))
+  (setq obj-dis (abs (- now-gri obj-gri)))
+  (format t "no-obj-dis ~A, obj-dis ~A ~%" no-obj-dis obj-dis)
+  (if (>= obj-dis no-obj-dis)
+      (progn
+	;; 失敗時の処理
+	(format t "grasp fail? ~%")
+	(setq *grasp-fail-flag* t)
+	)
+    )
+  )
+
 (defun set-initial-av ()
   (send *robot* :angle-vector *initial-av*)
+  (send *robot* :head-neck-y :joint-angle 0.0)
+  (send *robot* :head-neck-p :joint-angle 60.0)
   (send *ri* :angle-vector (send *robot* :angle-vector) 4000)
   (send *ri* :wait-interpolation) 
   )
 
-(defun replay-rav-list (rav-list &key (time 200))
+(defun replay-rav-list (rav-list &key (time 200) (reverse nil))
+  (if reverse
+      (setq rav-list (reverse rav-list))
+    )
   (setq rav-length (length rav-list))
   (format t "length of rav-list : ~A ~%" rav-length)
   (send *robot* :angle-vector (send *ri* :state :potentio-vector))
@@ -260,6 +353,69 @@
     )
   (send *ri* :angle-vector-sequence avs tms)
   (send *ri* :wait-interpolation)  
+  )
+
+(defun replay-short-rav-list (rav-list)
+  (send *robot* :head-neck-y :joint-angle 0.0)
+  (send *robot* :head-neck-p :joint-angle 60.0)
+  (send *robot* :rarm :angle-vector (elt rav-list 0))
+  (send *ri* :angle-vector (send *robot* :angle-vector) 2000)
+  (send *ri* :wait-interpolation)
+
+  (replay-rav-list rav-list)
+  )
+
+(defun replay-rec-list (rec-list &key (time 200) (reverse nil))
+  (if reverse
+      (setq rec-list (reverse rec-list))
+    )
+  (setq rec-length (length rec-list))
+  (format t "length of rec-list : ~A ~%" rec-length)
+  (send *robot* :angle-vector (send *ri* :state :potentio-vector))
+  (setq now-head-y (send *robot* :head-neck-y :joint-angle))
+  (setq now-head-p (send *robot* :head-neck-p :joint-angle))
+
+  (setq avs (list))
+  (setq tms (list))
+  (dolist (rec rec-list)
+    ;; (send *robot* :head-neck-y :joint-angle now-head-y)
+    ;; (send *robot* :head-neck-p :joint-angle now-head-p)
+    ;; (send *robot* :head-neck-y :joint-angle -0.005299)
+    ;; (send *robot* :head-neck-p :joint-angle 52.746)
+    (send *robot* :head-neck-y :joint-angle 0.0)
+    (send *robot* :head-neck-p :joint-angle 60.0)
+    (setq ik-res (send *robot* :rarm :inverse-kinematics
+		       rec
+		       ))
+    (if (equal ik-res nil)
+	(progn
+	  (setq *ik-fail-flag* t)
+	  (return-from replay-rec-list)
+	  )
+	)
+    (setq avs (append avs (list (send *robot* :angle-vector))))
+    (setq tms (append tms (list time)))
+    )
+  (send *ri* :angle-vector-sequence avs tms)
+  (send *ri* :wait-interpolation)
+  )
+
+(defun replay-short-rec-list (rec-list)
+  (send *robot* :head-neck-y :joint-angle 0.0)
+  (send *robot* :head-neck-p :joint-angle 60.0)
+  (setq ik-res (send *robot* :rarm :inverse-kinematics
+		     (elt rec-list 0)
+		     ))
+  (if (equal ik-res nil)
+      (progn
+	(setq *ik-fail-flag* t)
+	(return-from replay-short-rec-list)
+	)
+    )
+  (send *ri* :angle-vector (send *robot* :angle-vector) 2000)
+  (send *ri* :wait-interpolation)
+
+  (replay-rec-list rec-list)
   )
 
 (defun record-rav-key ()
@@ -341,61 +497,16 @@
   (send *ri* :speak-jp "物体の置き方を教えて下さい")
   (unix:sleep 2)
 
-  ;; ;; okと言われるまで待つ
-  ;; (manequine-mode :arm (list "rarm") :start t)
-  ;; (ros::unsubscribe "/speech_to_text")
-  ;; (setq *ok-flag* nil)
-  ;; (ros::subscribe "/speech_to_text" speech_recognition_msgs::SpeechRecognitionCandidates #'voice-ok-cb)
-  ;; (setq  *place-rav-list* (list))
-  ;; (ros::rate 10)
-  ;; (until *ok-flag*
-  ;; 	 (send *robot* :angle-vector (send *ri* :state :potentio-vector))
-  ;; 	 (setq *now-rav* (send *robot* :rarm :angle-vector))
-  ;; 	 (format t "now rav : ~A" *now-rav*)
-  ;; 	 (setq *place-rav-list* (append *place-rav-list* (list *now-rav*)))
-  ;; 	 ;; todo also save times ?
-  ;;        (ros::spin-once)
-  ;;        (ros::sleep)
-  ;; 	 )
-  
-  ;; (send *ri* :speak-jp "ありがとうございます")
-  ;; (manequine-end)
-  ;; (print *place-rav-list*)
-
-  ;; (setq *place-rav-list* (record-rav-voice))  
   (setq place-ans (record-rav-voice))  
   (setq *place-rav-list* (elt place-ans 0))  
   (setq *place-rec-list* (elt place-ans 1))  
-  
+
   (send *ri* :stop-grasp :rarm :wait t);; TODO 離す時のグリッパの離し具合？
 
   ;; 手の離し方
   (send *ri* :speak-jp "手の離し方を教えて下さい")
   (unix:sleep 2)
 
-  ;; okと言われるまで待つ
-  ;; (manequine-mode :arm (list "rarm") :start t)
-  ;; (ros::unsubscribe "/speech_to_text")
-  ;; (setq *ok-flag* nil)
-  ;; (ros::subscribe "/speech_to_text" speech_recognition_msgs::SpeechRecognitionCandidates #'voice-ok-cb)
-  ;; (setq  *relase-rav-list* (list))
-  ;; (ros::rate 10)
-  ;; (until *ok-flag*
-  ;; 	 (send *robot* :angle-vector (send *ri* :state :potentio-vector))
-  ;; 	 (setq *now-rav* (send *robot* :rarm :angle-vector))
-  ;; 	 (setq *now-rav* (send *robot* :rarm :end-coords))
-  ;; 	 (format t "now rav : ~A" *now-rav*)
-  ;; 	 (setq *release-rav-list* (append *release-rav-list* (list *now-rav*)))
-  ;; 	 ;; todo also save times ?
-  ;;        (ros::spin-once)
-  ;;        (ros::sleep)
-  ;; 	 )
-
-  ;; (send *ri* :speak-jp "ありがとうございます")
-  ;; (manequine-end)
-  ;; (print *release-rav-list*)
-
-  ;; (setq *release-rav-list* (record-rav-voice))  
   (setq release-ans (record-rav-voice))  
   (setq *release-rav-list* (elt release-ans 0))  
   (setq *release-rec-list* (elt release-ans 1))  
@@ -410,28 +521,6 @@
   (send *ri* :speak-jp "物体の掴み方を教えて下さい")
   (unix:sleep 2)
   
-  ;; okと言われるまで待つ
-  ;; (manequine-mode :arm (list "rarm") :start t)
-  ;; (ros::unsubscribe "/speech_to_text")
-  ;; (setq *ok-flag* nil)
-  ;; (ros::subscribe "/speech_to_text" speech_recognition_msgs::SpeechRecognitionCandidates #'voice-ok-cb)
-  ;; (setq  *pick-rav-list* (list))
-  ;; (ros::rate 10)
-  ;; (until *ok-flag*
-  ;; 	 (send *robot* :angle-vector (send *ri* :state :potentio-vector))
-  ;; 	 (setq *now-rav* (send *robot* :rarm :angle-vector))
-  ;; 	 (format t "now rav : ~A" *now-rav*)
-  ;; 	 (setq *pick-rav-list* (append *pick-rav-list* (list *now-rav*)))
-  ;; 	 ;; todo also save times ?
-  ;;        (ros::spin-once)
-  ;;        (ros::sleep)
-  ;; 	 )
-  
-  ;; (send *ri* :speak-jp "ありがとうございます")
-  ;; (manequine-end)
-  ;; (print *pick-rav-list*)
-
-  ;; (setq *pick-rav-list* (record-rav-voice))  
   (setq pick-ans (record-rav-voice))  
   (setq *pick-rav-list* (elt pick-ans 0))  
   (setq *pick-rec-list* (elt pick-ans 1))  
@@ -446,6 +535,42 @@
   ;; 離し方を実行する
   (replay-rav-list *release-rav-list*)
   
+  (set-initial-av)
+  )
+
+(defun place-and-release-object-teaching-detail ()
+  (set-initial-av)
+
+  (send *ri* :speak-jp "物体の置きはじめの姿勢を教えて下さい")
+  (unix:sleep 2)
+  (wait-ok-manequine)
+  (send *robot* :head-neck-y :joint-angle 0.0)
+  (send *robot* :head-neck-p :joint-angle 60.0)
+  (send *robot* :angle-vector (send *ri* :state :potentio-vector))
+  (setq *place-initial-av* (send *robot* :angle-vector))
+  (setq *place-initial-rec* (send *robot* :rarm :end-coords))
+  (unix:sleep 2)
+  (send *ri* :start-grasp :rarm :wait t) ;; TODO 持つ強さ？
+
+  ;; 物体の置き方を教わる
+  (send *ri* :speak-jp "物体の置き方を教えて下さい")
+  (unix:sleep 2)
+  (setq place-ans (record-rav-voice))
+  (setq *place-short-rav-list* (elt place-ans 0))
+  (setq *place-short-rec-list* (elt place-ans 1))
+
+  (send *ri* :stop-grasp :rarm :wait t);; TODO 離す時のグリッパの離し具合？
+
+  ;; 手の離し方
+  (send *ri* :speak-jp "手の離し方を教えて下さい")
+  (unix:sleep 2)
+
+  (setq release-ans (record-rav-voice))
+  (setq *release-short-rav-list* (elt release-ans 0))
+  (setq *release-short-rec-list* (elt release-ans 1))
+  (setq *pick-short-rav-list* (reverse *release-short-rav-list*))
+  (setq *pick-short-rec-list* (reverse *release-short-rec-list*))
+
   (set-initial-av)
   )
 
@@ -478,7 +603,7 @@
   (send *ri* :stop-grasp :rarm :wait t)
   (unix:sleep 2)
   (replay-rav-list *release-rav-list*)
-  
+
   ;; ここで道具を見て，バウンディングボックスとか色々な物を保存する．
   
   ;; 道具を掴む
@@ -493,7 +618,7 @@
   (warn "please run (replay-test) ~%")
   )
 
-(defun now-test ()
+(defun teach-and-replay-test ()
   ;; 動作を教わる
   (teaching-test)
   
@@ -508,7 +633,7 @@
   (send *ri* :speak-jp "動作を実行しました")
   )
 
-(defun tmp-data-collection (&key (times 10))
+(defun same-data-collection (&key (times 10))
   ;; 机の上にそのまま物を置いていく
   ;; 道具を持たせて貰う
   (receive-object)
@@ -550,7 +675,144 @@
     ) 
   )
 
-(defun tmp-test ()
+(defun short-teaching-test ()
+  (send *ri* :start-grasp :rarm :wait t)
+  (unix:sleep 1)
+  (setq *no-obj-l-gri* (send *ri* :state :gripper :rarm :position))
+
+  (initial-pose-teaching)
+  (unix:sleep 1)
+  (setq *obj-l-gri* (send *ri* :state :gripper :rarm :position))
+  (set-initial-av)
+
+  (place-and-release-object-teaching-detail)
+  (set-initial-av)
+
+  ;; ここで観察する
+
+  )
+
+(defun short-replay-test ()
+  ;; ここで机の状態を見る
+  ;; 道具を持たせて貰う
+  (receive-object)
+
+  ;; 道具を置く
+  (set-initial-av)
+  (send *ri* :start-grasp :rarm :wait t)
+  (unix:sleep 2)
+  (replay-short-rav-list *place-short-rav-list*)
+
+  ;; 道具を離す
+  (send *ri* :stop-grasp :rarm :wait t)
+  (unix:sleep 2)
+  (replay-rav-list *release-short-rav-list*)
+
+  ;; ここで道具を見て，バウンディングボックスとか色々な物を保存する．
+
+  ;; 道具を掴む
+  (set-initial-av)
+  (send *ri* :stop-grasp :rarm :wait t)
+  (unix:sleep 2)
+  (replay-short-rav-list *pick-short-rav-list*)
+
+  (send *ri* :start-grasp :rarm :wait t)
+  (unix:sleep 2)
+  )
+
+(defun short-teach-and-replay-test ()
+  ;; 動作を教わる
+  (short-teaching-test)
+
+  ;; 教わった動作を再生する
+  (send *ri* :speak-jp "教わった動作を実行します")
+  (short-replay-test)
+
+  (send *robot* :rarm :move-end-pos #f(0 0 100) :world)
+  (send *ri* :angle-vector (send *robot* :angle-vector))
+  (send *ri* :wait-interpolation)
+
+  (send *ri* :speak-jp "動作を実行しました")
+  )
+
+(defun short-data-test (&key (times 10))
+  ;; 道具を持たせて貰う
+  (receive-object)
+
+  ;; rav2rec
+  (setq *place-short-rec-list* (rav2rec *place-short-rav-list*))
+  (setq *release-short-rec-list* (rav2rec *release-short-rav-list*))
+  (setq *pick-short-rec-list* (rav2rec *pick-short-rav-list*))
+  ;; assoc rec to obj-coords
+  (setq *obj-coords* (make-cascoords))
+  (send *obj-coords* :newcoords (send (elt *release-short-rec-list* 0) :copy-worldcoords))
+  (setq *initial-obj-coords* (send *obj-coords* :copy-worldcoords))
+  (setq *place-assoc-short-rec-list* (assoc-rec-list *place-short-rec-list* *obj-coords*))
+  (setq *release-assoc-short-rec-list* (assoc-rec-list *release-short-rec-list* *obj-coords*))
+  (setq *pick-assoc-short-rec-list* (assoc-rec-list *pick-short-rec-list* *obj-coords*))
+
+  (send *ri* :speak-jp "自動のデータ収集を開始します")
+  (dotimes (i times)
+    ;; 物体を置く
+    (set-initial-av)
+    (send *ri* :start-grasp :rarm :wait t)
+
+    ;; 物体を置く場所を計画する．平面の中でどこに置くか
+    ;; (send *obj-coords* :rotate (deg2rad 10) :z :world)
+    (setq *ik-ok-flag* nil)
+    (until *ik-ok-flag*
+	   (send *obj-coords* :newcoords (random-coords *initial-obj-coords* :x 50 :y 100 :theta 30))
+	   (format t "x-num: ~A y-num: ~A theta-num: ~A ~%" *x-num* *y-num* *theta-num*)
+	   (setq ik-place-flag (ik-check *place-assoc-short-rec-list*))
+	   (setq ik-release-flag (ik-check *release-assoc-short-rec-list*))
+	   (setq ik-pick-flag (ik-check *pick-assoc-short-rec-list*))
+	   (if (and ik-place-flag ik-release-flag ik-pick-flag)
+	       (setq *ik-ok-flag* t)
+	       )
+	   )
+
+    (start-data-collection :service "place_data_collection_rosbag/start_request");; 置く時のデータ収集
+    (unix:sleep 4)
+    (replay-short-rec-list *place-assoc-short-rec-list*)
+    (end-data-collection :service "place_data_collection_rosbag/end_request");; 置く時のデータ収集
+
+    ;; 道具を離す
+    (send *ri* :stop-grasp :rarm :wait t)
+    (unix:sleep 2)
+    (replay-short-rec-list *release-assoc-short-rec-list*)
+
+    ;; ここで道具を見て，バウンディングボックスとか色々なdataを保存する．
+
+    ;; 道具を掴む
+    (set-initial-av)
+    (send *ri* :stop-grasp :rarm :wait t)
+
+    (start-data-collection :service "pick_data_collection_rosbag/start_request");; 掴む時のデータ収集
+    (unix:sleep 4)
+    (replay-short-rec-list *pick-assoc-short-rec-list*)
+    (end-data-collection :service "pick_data_collection_rosbag/end_request");; 掴む時のデータ収集
+
+    (send *ri* :start-grasp :rarm :wait t)
+    (unix:sleep 2)
+
+    (send *robot* :rarm :move-end-pos #f(0 0 100) :world)
+    (send *ri* :angle-vector (send *robot* :angle-vector))
+    (send *ri* :wait-interpolation)
+    (set-initial-av)
+
+    (setq *grasp-fail-flag* nil)
+    (grasp-fail-check *no-obj-l-gri* *obj-l-gri*)
+    (if *grasp-fail-flag*
+	(progn
+	  (send *ri* :speak-jp "物体の把持に失敗したので助けて下さい")
+	  (ok-wait)
+	  )
+      )
+    )
+  (send *ri* :speak-jp "自動のデータ収集が終了しました")
+  )
+
+(defun tmp-test-key ()
   (initial-pose-teaching-key)
 
   (set-initial-av)
