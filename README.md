@@ -6,11 +6,27 @@ Please see doc/manual.docx
 ## data collection and learning in PR2
 
 ### data collection PR2 look around
+launch files
 ```
-roscd multiple
-roseus 
+roslaunch multiple_grasping_pose_learning multiply_robot_and_depth_mask.launch
+roslaunch multiple_grasping_pose_learning pr2_data_collection_server.launch
 ```
+exec eus
+```
+roscd multiple_grasping_pose_learning/euslisp/
+roseus pr2_look_around_collect_data_test.l
+(look-around-larm-test)
+```
+data will saved in `$(find multiple_grasping_pose_learning)/dataset/robot_depth_filter/`
 
+
+### data collection PR2 tabletop pick&place with teaching
+```
+roscd multiple_grasping_pose_learning/euslisp/
+roseus pr2_tabletop_collect_data_test_with_teaching.l
+(short-teach-and-replay-test)
+(short-data-test :times 40)
+```
 
 ### make dataset from collection data
 - 石さんの
