@@ -46,6 +46,12 @@ python annotation_bbox_pr2_look_around.py -t ../dataset/robot_depth_filter/targe
 label_map.pbtxtは対応しているものに変更して，  
 pipeline.configはコピペする．  
 
+#### その他のデータセット生成プログラム
+画像そのままで2次元bboxのアノテーション結果を反映させる．
+```
+python3 check_annotation_bbox_pr2_look_around.py -t ../dataset/robot_depth_filter/target -g ../dataset/check_data -m multiply_mask
+```
+
 ### learning from dataset
 please edit your `DLBOX_IP` in `train_object_detection_dlbox.sh first`
 ```

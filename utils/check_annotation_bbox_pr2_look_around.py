@@ -252,14 +252,15 @@ def dataset_generate(rgb_img,label,roi_dimension):
 
 if __name__ == "__main__":
     target_data_path = sys.argv[sys.argv.index("-t") + 1] if "-t" in sys.argv else "../dataset/robot_depth_filter/target"
-    background_data_path = sys.argv[sys.argv.index("-b") + 1] if "-b" in sys.argv else "../dataset/background"
+    # background_data_path = sys.argv[sys.argv.index("-b") + 1] if "-b" in sys.argv else "../dataset/background"
     save_data_path = sys.argv[sys.argv.index("-c") + 1] if "-c" in sys.argv else "../dataset/check_data"
+    mask_name = sys.argv[sys.argv.index("-m") + 1] if "-m" in sys.argv else "multiply_mask"
     background_imgs = []
     image_counter = 0
 
-    #load background image
-    for backgroundfile in glob.glob(os.path.join(background_data_path, '*jpg')):
-        background_imgs.append(cv2.imread(backgroundfile))
+    # #load background image
+    # for backgroundfile in glob.glob(os.path.join(background_data_path, '*jpg')):
+    #     background_imgs.append(cv2.imread(backgroundfile))
 
     target_obj_rgbs = []
     target_obj_masks = []
@@ -280,13 +281,13 @@ if __name__ == "__main__":
                 if suffix == 'rgb.jpg':
                     # print(imgfile)
                     size = os.path.getsize(imgfile)
-                    maskfile = imgfile.replace("rgb","multiply_mask")
+                    maskfile = imgfile.replace("rgb",mask_name)
                     mask_img = cv2.imread(maskfile)
                     gray = cv2.cvtColor(mask_img, cv2.COLOR_BGR2GRAY)
                     img2 = cv2.medianBlur(gray,5)
                     ret, thresh = cv2.threshold(img2, 1, 255, 0)
-                    # im2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-                    contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+                    im2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+                    # contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
                     points = np.empty((0,2),int)
                     max_contour = contours[0].reshape([-1,2])
                     for i in range(len(contours)):    
