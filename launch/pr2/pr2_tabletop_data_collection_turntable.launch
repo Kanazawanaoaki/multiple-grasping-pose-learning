@@ -1,6 +1,7 @@
 <launch>
   <arg name="INPUT" default="/kinect_head/depth_registered/throttled/points" />
   <arg name="INPUT_INFO" value="/kinect_head/depth_registered/throttled/camera_info" />
+  <arg name="INPUT_IMAGE" default="/kinect_head/rgb/image_rect_color"/>
   <arg name="run_rviz" default="false" />
 
   <!-- extract pointcloud around cuttinb board  -->
@@ -39,8 +40,21 @@
     <arg name="publish_tf" value="false" />
   </include>
 
-  <!-- <include file="$(find multiple_grasping_pose_learning)/launch/pr2/pr2_turntable_data_collection.launch"/> -->
+  <group ns="tabletop_filter" >
+    <node name="apply_mask_image"
+          pkg="nodelet" type="nodelet"
+          args="standalone jsk_perception/ApplyMaskImage">
+      <remap from="~input" to="$(arg INPUT_IMAGE)" />
+      <remap from="~input/mask" to="/segmentation_decomposer/mask" />
+      <rosparam>
+        approximate_sync: true
+        clip: false
+      </rosparam>
+    </node>
+  </group>
 
+  <include file="$(find multiple_grasping_pose_learning)/launch/pr2/pr2_data_collection_server_tabletop.launch"/>
+  
   <node if="$(arg run_rviz)"
         pkg="rviz" name="pr2_rviz" type="rviz"
         args="-d $(find multiple_grasping_pose_learning)/config/pr2_tabletop.rviz" />

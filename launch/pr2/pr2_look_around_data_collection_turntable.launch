@@ -1,0 +1,5 @@
+<launch>
+  <include file="$(find multiple_grasping_pose_learning)/launch/pr2/multiply_robot_and_depth_mask.launch"/>
+  
+  <include file="$(find multiple_grasping_pose_learning)/launch/pr2/pr2_data_collection_server.launch"/>  
+</launch>

@@ -1,0 +1,31 @@
+<launch>
+  <arg name="collect_data" default="true" />
+
+  <node name="tabletop_data_collection"
+        pkg="jsk_data" type="data_collection_server.py"
+        output="screen" if="$(arg collect_data)">
+    <rosparam subst_value="true">
+      message_filters: true
+      approximate_sync: true
+      <!-- message_filters: false -->
+      slop: 0.1
+      wait_save_request: true
+      method: request
+      save_dir: $(find multiple_grasping_pose_learning)/dataset/tabletop_filter
+      method: request
+      topics:
+          - name: /kinect_head/rgb/image_rect_color
+            msg_class: sensor_msgs/Image
+            fname: rgb.jpg
+            savetype: ColorImage
+          - name: /segmentation_decomposer/mask
+            msg_class: sensor_msgs/Image
+            fname: mask.jpg
+            savetype: ColorImage
+          - name: /tabletop_filter/apply_mask_image/output
+            msg_class: sensor_msgs/Image
+            fname: apply_mask.jpg
+            savetype: ColorImage
+    </rosparam>
+  </node>
+</launch>

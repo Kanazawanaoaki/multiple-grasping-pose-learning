@@ -8,8 +8,7 @@ Please see doc/manual.docx
 ### data collection PR2 look around
 launch files
 ```
-roslaunch multiple_grasping_pose_learning multiply_robot_and_depth_mask.launch
-roslaunch multiple_grasping_pose_learning pr2_data_collection_server.launch
+roslaunch multiple_grasping_pose_learning pr2_look_around_data_collection_turntable.launch
 ```
 exec eus
 ```
@@ -21,6 +20,11 @@ data will saved in `$(find multiple_grasping_pose_learning)/dataset/robot_depth_
 
 
 ### data collection PR2 tabletop pick&place with teaching
+launch files
+```
+roslaunch multiple_grasping_pose_learning pr2_tabletop_data_collection_turntable.launch
+```
+exec eus
 ```
 roscd multiple_grasping_pose_learning/euslisp/
 roseus pr2_tabletop_collect_data_test_with_teaching.l
