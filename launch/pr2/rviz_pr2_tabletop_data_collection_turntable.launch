@@ -1,0 +1,47 @@
+<launch>
+  <!-- <arg name="INPUT" default="/kinect_head/depth_registered/throttled/points" /> -->
+  <!-- <arg name="INPUT_INFO" value="/kinect_head/depth_registered/throttled/camera_info" /> -->
+  <arg name="run_rviz" default="true" />
+
+  <!-- <!-\- extract pointcloud around cuttinb board  -\-> -->
+  <!-- <node name="attention_clipper" -->
+  <!--       pkg="nodelet" type="nodelet" -->
+  <!--       args="standalone jsk_pcl/AttentionClipper"> -->
+  <!--   <remap from="~input/points" to="$(arg INPUT)" /> -->
+  <!--   <remap from="~input" to="$(arg INPUT_INFO)" /> -->
+  <!--   <rosparam> -->
+  <!--     initial_pos: [0.65, 0.0, 0.8] -->
+  <!--     initial_rot: [0, 0, 0] -->
+  <!--     dimension_x: 1.0 -->
+  <!--     dimension_y: 1.0 -->
+  <!--     dimension_z: 1.0 -->
+  <!--     frame_id: base_link -->
+  <!--     use_multiple_attention: false -->
+  <!--   </rosparam> -->
+  <!-- </node> -->
+
+  <!-- <node name="extract_indices" pkg="nodelet" type="nodelet" -->
+  <!--     args="standalone jsk_pcl/ExtractIndices" output="screen"> -->
+  <!--     <remap from="~input" to="$(arg INPUT)" /> -->
+  <!--     <remap from="~indices" to="attention_clipper/output/point_indices" /> -->
+  <!--     <rosparam> -->
+  <!--       keep_organized: true -->
+  <!--     </rosparam> -->
+  <!-- </node> -->
+
+  
+  <!-- <include file="$(find jsk_pcl_ros)/sample/tabletop_object_detector.launch"> -->
+  <!--   <arg name="input" value="/extract_indices/output" /> -->
+  <!--   <arg name="sensor_frame" value="/head_mount_kinect_rgb_optical_frame" /> -->
+  <!--   <arg name="launch_openni" value="false" /> -->
+  <!--   <arg name="launch_tracking" value="true" /> -->
+  <!--   <arg name="launch_rviz" value="false" /> -->
+  <!--   <arg name="publish_tf" value="false" /> -->
+  <!-- </include> -->
+
+  <!-- <include file="$(find multiple_grasping_pose_learning)/launch/pr2/pr2_turntable_data_collection.launch"/> -->
+
+  <node if="$(arg run_rviz)"
+        pkg="rviz" name="pr2_rviz" type="rviz"
+        args="-d $(find multiple_grasping_pose_learning)/config/pr2_tabletop.rviz" />
+</launch>
