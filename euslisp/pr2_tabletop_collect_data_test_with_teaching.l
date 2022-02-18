@@ -263,10 +263,18 @@
 
 (defun dump2file (&key (file_name "tmp-teaching-data.l"))
   (dump-loadable-structure file_name *no-obj-l-gri* *obj-l-gri* *initial-av* *place-short-rav-list* *release-short-rav-list* *pick-short-rav-list*)
+  (format t "data dumped in ~A ~%" file_name)
   )
 
 (defun load-from-file (&key (file_name "tmp-teaching-data.l"))
   (load file_name)
+  (format t "data loaded from ~A ~%" file_name)
+  (format t "no-obj-l-gri : ~A ~%" *no-obj-l-gri*)
+  (format t "obj-l-gri : ~A ~%" *obj-l-gri*)
+  (format t "initial-av : ~A ~%" *initial-av*)
+  (format t "place-short-rav-list size : ~A ~%" (length *place-short-rav-list*))
+  (format t "release-short-rav-list size : ~A ~%" (length *release-short-rav-list*))
+  (format t "pick-short-rav-list size : ~A ~%" (length *pick-short-rav-list*))
   )
 
 (defun rav2rec (rav-list)
