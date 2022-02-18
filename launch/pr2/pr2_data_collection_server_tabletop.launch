@@ -5,10 +5,11 @@
         pkg="jsk_data" type="data_collection_server.py"
         output="screen" if="$(arg collect_data)">
     <rosparam subst_value="true">
-      message_filters: true
-      approximate_sync: true
-      <!-- message_filters: false -->
-      slop: 0.1
+      <!-- message_filters: true -->
+      <!-- approximate_sync: true -->
+      message_filters: false
+      <!-- slop: 0.1 -->
+      <!-- slop: 1.0 -->
       wait_save_request: true
       method: request
       save_dir: $(find multiple_grasping_pose_learning)/dataset/tabletop_filter
@@ -22,10 +23,10 @@
             msg_class: sensor_msgs/Image
             fname: mask.jpg
             savetype: ColorImage
-          - name: /tabletop_filter/apply_mask_image/output
-            msg_class: sensor_msgs/Image
-            fname: apply_mask.jpg
-            savetype: ColorImage
+          <!-- - name: /tabletop_filter/apply_mask_image/output -->
+          <!--   msg_class: sensor_msgs/Image -->
+          <!--   fname: apply_mask.jpg -->
+          <!--   savetype: ColorImage -->
     </rosparam>
   </node>
 </launch>

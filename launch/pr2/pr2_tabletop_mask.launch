@@ -6,6 +6,7 @@
 
   <!-- extract pointcloud around cuttinb board  -->
   <node name="attention_clipper"
+        clear_params="true"
         pkg="nodelet" type="nodelet"
         args="standalone jsk_pcl/AttentionClipper">
     <remap from="~input/points" to="$(arg INPUT)" />
@@ -22,12 +23,14 @@
   </node>
 
   <node name="extract_indices" pkg="nodelet" type="nodelet"
-	  args="standalone jsk_pcl/ExtractIndices" output="screen">
-      <remap from="~input" to="$(arg INPUT)" />
-      <remap from="~indices" to="attention_clipper/output/point_indices" />
-      <rosparam>
-        keep_organized: true
-      </rosparam>
+        clear_params="true"
+	args="standalone jsk_pcl/ExtractIndices" output="screen">
+    <remap from="~input" to="$(arg INPUT)" />
+    <remap from="~indices" to="attention_clipper/output/point_indices" />
+    <rosparam>
+      keep_organized: true
+      approximate_sync: true
+    </rosparam>
   </node>
 
   <!-- tmp -->

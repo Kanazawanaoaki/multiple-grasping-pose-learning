@@ -65,6 +65,27 @@
   (setq *table_pose* (get_table))
   )
 
+;; kanazawa devel
+(defun save_data ()
+  ;; (let (res)
+  (setq req (instance std_srvs::TriggerRequest :init))
+  (setq res (ros::service-call "tabletop_data_collection/save_request" req t))
+  (format t "data saved! ~%")
+    ;; )
+    )
+
+(defun save_data_wait ()
+  ;; (let (res)
+  (setq save-flag nil)
+  (until save-flag
+	 (setq req (instance std_srvs::TriggerRequest :init))
+	 (setq res (ros::service-call "tabletop_data_collection/save_request" req t))
+	 (if (send res :success)
+	     (setq save-flag t)
+	   ))
+  (format t "data saved! ~%")
+  ;; )
+  )
 
 (defun dissoc-rcup ()
   (if (not (eql (send *rcup* :parent) nil))
@@ -240,6 +261,14 @@
     )
   )
 
+(defun dump2file (&key (file_name "tmp-teaching-data.l"))
+  (dump-loadable-structure file_name *no-obj-l-gri* *obj-l-gri* *initial-av* *place-short-rav-list* *release-short-rav-list* *pick-short-rav-list*)
+  )
+
+(defun load-from-file (&key (file_name "tmp-teaching-data.l"))
+  (load file_name)
+  )
+
 (defun rav2rec (rav-list)
   (setq tmp-av (send *robot* :angle-vector))
   (format t "length of rav-list : ~A ~%" (length rav-list))
@@ -326,6 +355,14 @@
   (send *robot* :head-neck-p :joint-angle 60.0)
   (send *ri* :angle-vector (send *robot* :angle-vector) 4000)
   (send *ri* :wait-interpolation) 
+  )
+
+(defun set-look-pose ()
+  (send *robot* :reset-manip-pose)
+  (send *robot* :head-neck-y :joint-angle 0.0)
+  (send *robot* :head-neck-p :joint-angle 60.0)
+  (send *ri* :angle-vector (send *robot* :angle-vector) 2000)
+  (send *ri* :wait-interpolation)
   )
 
 (defun replay-rav-list (rav-list &key (time 200) (reverse nil))
@@ -605,7 +642,7 @@
   (replay-rav-list *release-rav-list*)
 
   ;; ここで道具を見て，バウンディングボックスとか色々な物を保存する．
-  
+
   ;; 道具を掴む
   (set-initial-av)
   (send *ri* :stop-grasp :rarm :wait t)
@@ -656,7 +693,7 @@
     (replay-rav-list *release-rav-list*)
     
     ;; ここで道具を見て，バウンディングボックスとか色々なdataを保存する．
-        
+
     ;; 道具を掴む
     (set-initial-av)
     (send *ri* :stop-grasp :rarm :wait t)
@@ -735,7 +772,7 @@
   (send *ri* :speak-jp "動作を実行しました")
   )
 
-(defun short-data-test (&key (times 10))
+(defun short-data-test (&key (times 10) (save_img nil) (save_avs t))
   ;; 道具を持たせて貰う
   (receive-object)
 
@@ -771,10 +808,14 @@
 	       )
 	   )
 
-    (start-data-collection :service "place_data_collection_rosbag/start_request");; 置く時のデータ収集
+    ;; (if save_avs
+    ;; 	(start-data-collection :service "place_data_collection_rosbag/start_request");; 置く時のデータ収集
+    ;;   )
     (unix:sleep 4)
     (replay-short-rec-list *place-assoc-short-rec-list*)
-    (end-data-collection :service "place_data_collection_rosbag/end_request");; 置く時のデータ収集
+    ;; (if save_avs
+    ;; 	(end-data-collection :service "place_data_collection_rosbag/end_request");; 置く時のデータ収集
+    ;;   )
 
     ;; 道具を離す
     (send *ri* :stop-grasp :rarm :wait t)
@@ -782,15 +823,26 @@
     (replay-short-rec-list *release-assoc-short-rec-list*)
 
     ;; ここで道具を見て，バウンディングボックスとか色々なdataを保存する．
+    (set-initial-av)
+    (set-look-pose)
+    (if save_img
+	(save_data_wait)
+      )
 
     ;; 道具を掴む
     (set-initial-av)
     (send *ri* :stop-grasp :rarm :wait t)
 
-    (start-data-collection :service "pick_data_collection_rosbag/start_request");; 掴む時のデータ収集
+    ;; 掴む時のデータ収集
+    (if save_avs
+	(start-data-collection :service "pick_data_collection_rosbag/start_request")
+      )
     (unix:sleep 4)
     (replay-short-rec-list *pick-assoc-short-rec-list*)
-    (end-data-collection :service "pick_data_collection_rosbag/end_request");; 掴む時のデータ収集
+    ;; 掴む時のデータ収集
+    (if save_avs
+	(end-data-collection :service "pick_data_collection_rosbag/end_request")
+      )
 
     (send *ri* :start-grasp :rarm :wait t)
     (unix:sleep 2)
