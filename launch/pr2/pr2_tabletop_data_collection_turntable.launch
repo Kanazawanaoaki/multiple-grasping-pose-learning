@@ -3,9 +3,7 @@
 
   <include file="$(find multiple_grasping_pose_learning)/launch/pr2/pr2_tabletop_mask.launch"/>
   
-  <include file="$(find multiple_grasping_pose_learning)/launch/pr2/pr2_data_collection_server_tabletop.launch"/>
-  
-  <node if="$(arg run_rviz)"
-        pkg="rviz" name="pr2_rviz" type="rviz"
-        args="-d $(find multiple_grasping_pose_learning)/config/pr2_tabletop.rviz" />
+  <include file="$(find multiple_grasping_pose_learning)/launch/pr2/pr2_data_collection_server_tabletop.launch">
+    <arg name="run_rviz" value="$(arg run_rviz)" />
+  </include>
 </launch>

@@ -1,6 +1,8 @@
 <launch>
   <arg name="collect_data" default="true" />
 
+  <include file="$(find multiple_grasping_pose_learning)/launch/pr2/pick_and_place_data_collection.launch"/>
+
   <node name="tabletop_data_collection"
         pkg="jsk_data" type="data_collection_server.py"
         output="screen" if="$(arg collect_data)">

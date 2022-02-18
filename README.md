@@ -22,14 +22,17 @@ data will saved in `$(find multiple_grasping_pose_learning)/dataset/robot_depth_
 ### data collection PR2 tabletop pick&place with teaching
 launch files
 ```
-roslaunch multiple_grasping_pose_learning pr2_tabletop_data_collection_turntable.launch
+roscd multiple_grasping_pose_learning/launch/pr2/
+roslaunch pr2_tabletop_mask.launch
+# roslaunch multiple_grasping_pose_learning pr2_tabletop_data_collection_turntable.launch
+roslaunch multiple_grasping_pose_learning pr2_data_collection_server_tabletop.launch
 ```
 exec eus
 ```
 roscd multiple_grasping_pose_learning/euslisp/
 roseus pr2_tabletop_collect_data_test_with_teaching.l
 (short-teach-and-replay-test)
-(short-data-test :times 40)
+(short-data-test :times 40 :save_img nil :save_avs t)
 ```
 
 ### make dataset from collection data
