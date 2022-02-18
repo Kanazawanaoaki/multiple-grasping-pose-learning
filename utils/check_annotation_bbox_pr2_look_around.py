@@ -286,8 +286,8 @@ if __name__ == "__main__":
                     gray = cv2.cvtColor(mask_img, cv2.COLOR_BGR2GRAY)
                     img2 = cv2.medianBlur(gray,5)
                     ret, thresh = cv2.threshold(img2, 1, 255, 0)
-                    im2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-                    # contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+                    # im2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+                    contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
                     points = np.empty((0,2),int)
                     max_contour = contours[0].reshape([-1,2])
                     for i in range(len(contours)):    
