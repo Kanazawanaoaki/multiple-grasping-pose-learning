@@ -49,3 +49,12 @@ if __name__ == "__main__":
                     rgb_img = cv2.imread(imgfile)
                     pil_img = np.fromfile(imgfile)
                     dataset_generate(rgb_img,pil_img)
+
+                # # for rembg after Ditec which concludes png maks images
+                # print(imgfile)
+                # suffix =  imgfile.split("/")[-1]
+                # # if suffix == 'rgb.jpg':
+                # rgb_img = cv2.imread(imgfile)
+                # pil_img = np.fromfile(imgfile)
+                # dataset_generate(rgb_img,pil_img)
+                
