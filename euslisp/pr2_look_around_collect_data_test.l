@@ -8,10 +8,12 @@
 (format t "init")
 ;; (ros::wait-for-service "aero_goods_grasping_demo")
 (ros::wait-for-service "after_stow_data_collection/save_request")
+(ros::advertise "object_name" std_msgs::string 1)
 
 (defun setup()
   (load "package://pr2eus/pr2-interface.l")
   (load "package://multiple_grasping_pose_learning/euslisp/model/red-cup.l")  
+  (load "package://multiple_grasping_pose_learning/euslisp/pr2_utils.l")  
   (pr2-init)
   (setq *robot* *pr2*)
   (setq *co* (make-coords))  
@@ -97,7 +99,7 @@
   ;; (send *co* :newcoords (make-coords :pos #f(550 -200 900)))
   (send *co* :newcoords (make-coords :pos #f(550 -200 900) :rpy #f(0 0 -1.571)))
   (send *robot* :rarm :inverse-kinematics
-	*co*
+        *co*
         :rotation-axis t
 	:revert-if-fail nil)
   (send *ri* :angle-vector (send *robot* :angle-vector) 4000)
@@ -115,7 +117,7 @@
   (send *co* :newcoords (send (send *pr2* :rarm :end-coords) :copy-worldcoords))
   (send *co* :rotate (deg2rad deg) :x)
   (send *robot* :rarm :inverse-kinematics
-	*co*
+        *co*
         :rotation-axis t
 	:revert-if-fail nil)
   (send *ri* :angle-vector (send *robot* :angle-vector) 4000)
@@ -125,7 +127,7 @@
 (defun receive-object-larm ()
   (send *co* :newcoords (make-coords :pos #f(578.018 60.941 1066.015) :rpy #f(-0.839 -0.613 0.499)))
   (send *robot* :larm :inverse-kinematics
-	*co*
+        *co*
         :rotation-axis t
 	:revert-if-fail nil)
   (send *ri* :angle-vector (send *robot* :angle-vector) 4000)
@@ -135,6 +137,50 @@
   (send *ri* :speak-jp "物体を握らせて下さい")
   (unix:sleep 2)
   (send *ri* :start-grasp :larm :wait t)
+  )
+
+(defun return-object-larm ()
+  (send *co* :newcoords (make-coords :pos #f(578.018 60.941 1066.015) :rpy #f(-0.839 -0.613 0.499)))
+  (send *robot* :larm :inverse-kinematics
+        *co*
+        :rotation-axis t
+	:revert-if-fail nil)
+  (send *ri* :angle-vector (send *robot* :angle-vector) 4000)
+  (send *ri* :wait-interpolation)
+
+  (send *ri* :speak-jp "物体を離すので受け取って下さい")
+  (unix:sleep 2)
+  (send *ri* :stop-grasp :larm :wait t)
+  )
+
+(defun ask-object-name ()
+  (setq cnt 0)
+  (setq ask-ans '("いいえ"))
+  (until (equal ask-ans '("はい"))
+         (if (= cnt 0)
+             (send *ri* :speak-jp "この物体の名前はなんですか？")
+           (send *ri* :speak-jp "もう一度，物体の名前を教えてください"))
+         (dialogue-func)
+         (setq *obj-name* *voice-data*)
+         (send *ri* :speak-jp (format nil "~Aですか？" *obj-name*))
+         (dialogue-func)
+         (setq ask-ans *voice-data*)
+         (setq cnt (+ cnt 1))
+         )
+  (setq msg (instance std_msgs::string :init))
+  (send msg :data *obj-name*)
+  (ros::publish "object_name" msg)
+  )
+
+(defun ask-end ()
+  (send *ri* :speak-jp "データ収集を修了しますか？")
+  (dialogue-func)
+  (setq ask-ans *voice-data*)
+  (if (equal ask-ans '("はい"))
+      (setq end-flag t)
+    (setq end-flag nil)
+    )
+  end-flag
   )
 
 (defun look-around-larm (deg)
@@ -151,25 +197,45 @@
 (defun look-around-test ()
   (receive-object)
 
-  ;; (send *ri* :speck-jp "データ収集を開始します")
+  ;; (send *ri* :speak-jp "データ収集を開始します")
   (dotimes (i 4)
     (look-around 90)
     (unix:sleep 1);; 念の為
     (save_data)
     )
-  ;; (send *ri* :speck-jp "データ収集を修了しました")
+  ;; (send *ri* :speak-jp "データ収集を修了しました")
   )
 
-(defun look-around-larm-test ()
+(defun look-around-larm-data-collection (&key (speak t))
   (receive-object-larm)
-
-  ;; (send *ri* :speck-jp "データ収集を開始します")
-  (dotimes (i 4)
-    (look-around-larm 90)
+  
+  (if speak
+      (send *ri* :speak-jp "データ収集を開始します"))
+  (dotimes (i 8)
+    (look-around-larm 45)
     (unix:sleep 1);; 念の為
     (save_data)
     )
-  ;; (send *ri* :speck-jp "データ収集を修了しました")
+  (if speak
+      (send *ri* :speak-jp "データ収集を修了しました"))
+  )
+
+(defun look-around-larm-data-collection-all-with-dialogue ()
+  (setq *end-flag* nil)
+  (until *end-flag*
+         (receive-object-larm)
+         (ask-object-name)
+         (send *ri* :speak-jp (format nil "~Aのデータ収集を開始します" *obj-name*))
+         (dotimes (i 8)
+           (look-around-larm 45)
+           (unix:sleep 1);; 念の為
+           (save_data)
+           )
+         (send *ri* :speak-jp (format nil "~Aのデータ収集を終了しました" *obj-name*))
+         (return-object-larm)         
+         (setq *end-flag* (ask-end))
+         )
+  (send *ri* :speak-jp "データ収集を終了します．ご協力ありがとうございました")
   )
 
 (setup)

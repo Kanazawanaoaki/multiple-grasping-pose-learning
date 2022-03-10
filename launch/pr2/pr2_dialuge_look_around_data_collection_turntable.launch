@@ -1,0 +1,9 @@
+<launch>
+  <include file="$(find multiple_grasping_pose_learning)/launch/pr2/multiply_robot_and_depth_mask.launch"/>
+  
+  <include file="$(find multiple_grasping_pose_learning)/launch/pr2/pr2_data_collection_server_dialogue_look_around.launch"/>
+
+  <node name="topic_continue"
+        pkg="multiple_grasping_pose_learning" type="ros-topic-continue.l"
+        />
+</launch>
