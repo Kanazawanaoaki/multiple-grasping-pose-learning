@@ -77,6 +77,19 @@
     ;; )
     )
 
+(defun save_data_wait ()
+  ;; (let (res)
+  (setq save-flag nil)
+  (until save-flag
+	 (setq req (instance std_srvs::TriggerRequest :init))
+	 (setq res (ros::service-call "after_stow_data_collection/save_request" req t))
+	 (if (send res :success)
+	     (setq save-flag t)
+	   ))
+  (format t "data saved! ~%")
+  ;; )
+  )
+
 (defun dissoc-rcup ()
   (if (not (eql (send *rcup* :parent) nil))
       (send (send *rcup* :parent) :dissoc *rcup*))
@@ -148,8 +161,16 @@
   (send *ri* :angle-vector (send *robot* :angle-vector) 4000)
   (send *ri* :wait-interpolation)
 
-  (send *ri* :speak-jp "物体を離すので受け取って下さい")
+
+  (send *ri* :speak-jp "物体を受け取って下さい")
   (unix:sleep 2)
+  (setq ask-ans '("いいえ"))
+  (until (equal ask-ans '("はい"))
+	 (send *ri* :speak-jp "物体を離しても良いですか")
+	 (dialogue-func)
+         (setq ask-ans *voice-data*)
+	 )
+  (unix:sleep 1)
   (send *ri* :stop-grasp :larm :wait t)
   )
 
@@ -163,12 +184,13 @@
          (dialogue-func)
          (setq *obj-name* *voice-data*)
          (send *ri* :speak-jp (format nil "~Aですか？" *obj-name*))
-         (dialogue-func)
+	 (format t "~Aですか？" *obj-name*)
+	 (dialogue-func)
          (setq ask-ans *voice-data*)
          (setq cnt (+ cnt 1))
          )
   (setq msg (instance std_msgs::string :init))
-  (send msg :data *obj-name*)
+  (send msg :data (string (elt *obj-name* 0)))
   (ros::publish "object_name" msg)
   )
 
@@ -180,6 +202,7 @@
       (setq end-flag t)
     (setq end-flag nil)
     )
+  (send *ri* :speak-jp "了解しました")
   end-flag
   )
 
@@ -236,6 +259,31 @@
          (setq *end-flag* (ask-end))
          )
   (send *ri* :speak-jp "データ収集を終了します．ご協力ありがとうございました")
+  )
+
+(defun look-around-larm-data-collection-all ()
+  (setq *end-flag* nil)
+  (setq *obj-cnt* 1)
+  (send *ri* :speak-jp "データ収集を開始します")
+  (until *end-flag*
+         (receive-object-larm)
+         ;; (ask-object-name)
+         ;; (send *ri* :speak-jp (format nil "~Aのデータ収集を開始します" *obj-name*))
+         (send *ri* :speak-jp "物体のデータ収集を開始します")
+         (dotimes (i 8)
+           (look-around-larm 45)
+           (unix:sleep 1);; 念の為
+           ;; (save_data)
+           (save_data_wait)
+           )
+         ;; (send *ri* :speak-jp (format nil "~Aのデータ収集を終了しました" *obj-name*))
+         (send *ri* :speak-jp "物体のデータ収集を終了しました")
+	 (unix:sleep 2)
+         (return-object-larm)
+         (setq *end-flag* (ask-end))
+         )
+  (unix:sleep 1)
+  (send *ri* :speak-jp "ご協力ありがとうございました")
   )
 
 (setup)

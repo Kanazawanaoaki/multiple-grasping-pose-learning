@@ -8,7 +8,8 @@
       message_filters: true
       approximate_sync: true
       <!-- message_filters: false -->
-      slop: 0.1
+      <!-- slop: 0.1 -->
+      slop: 1.0
       wait_save_request: true
       method: request
       save_dir: $(find multiple_grasping_pose_learning)/dataset/robot_depth_filter
