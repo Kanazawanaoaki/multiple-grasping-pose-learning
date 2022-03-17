@@ -32,7 +32,7 @@ def changedSV(bgr_img, alpha, beta, color_idx):
     return cv2.cvtColor(hsv8,cv2.COLOR_HSV2BGR_FULL)
 
 
-def data_generation(rgbs,masks,labels,countour_points,roi_dimensions,num_objs,num_data,img_counter):    
+def data_generation(rgbs,masks,labels,countour_points,roi_dimensions,num_objs,num_data,img_counter):
     image_counter = img_counter
     for data_id in range(num_data):
         #randomly choose a background
@@ -42,14 +42,14 @@ def data_generation(rgbs,masks,labels,countour_points,roi_dimensions,num_objs,nu
         bg_aspect = float(bg_width) / float(bg_height)
 
         # #set the output image size to 300x300
-        # # crop_width = 300 
+        # # crop_width = 300
         # # crop_height = 300
         # # crop_width = 640
         # # crop_height = 480
         # crop_height = 300
         # # crop_height = 360
         # crop_width = int(crop_height * bg_aspect) ## align aspect ratio
-        
+
         # ## random background region
         # height_rand_offset = (bg_height-crop_height) / 2 - 30 + np.random.randint(30)
         # # height_rand_offset = (bg_height-crop_height) / 2 ## w/o random
@@ -104,7 +104,7 @@ def data_generation(rgbs,masks,labels,countour_points,roi_dimensions,num_objs,nu
                 # random!!
                 ratio_x = random.random()
                 ratio_y = random.random()
-                
+
                 translate_roi_min_x = int(ratio_x * crop_width)
                 translate_roi_min_y = int(ratio_y * crop_height)
 
@@ -200,7 +200,7 @@ def data_generation(rgbs,masks,labels,countour_points,roi_dimensions,num_objs,nu
         source = {'database': "Unknown"}
         data = OrderedDict([
             ("folder","images"),
-            ("filename",suffix),                    
+            ("filename",suffix),
             ("path", path),
             ("source", {'database': "Unknown"}),
             ("size", OrderedDict([("width", crop_width),("height",crop_height),("depth",3)])),
@@ -310,7 +310,7 @@ if __name__ == "__main__":
                     # im2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
                     contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
                     points = np.empty((0,2),int)
-                    for i in range(len(contours)):    
+                    for i in range(len(contours)):
                         contour_points =  contours[i].reshape([-1,2])
                         c_max = np.max(contour_points,axis=0)
                         c_min = np.min(contour_points,axis=0)
@@ -342,7 +342,7 @@ if __name__ == "__main__":
 
                     # cv2.imshow("sample", target_obj)
                     # cv2.waitKey(0)
-                    
+
                     target_obj_rgbs.append(target_obj)
                     target_obj_masks.append(target_obj_mask)
                     # target_obj_labels.append(obj_num.split("/")[-1])
@@ -357,12 +357,12 @@ if __name__ == "__main__":
                     path = "does not matter"
                     image_counter = image_counter + 1
                     cv2.imwrite(save_rgb,rgb_img)
-                    
+
                     roi_min_y = roi_dimension[0]
                     roi_min_x = roi_dimension[1]
                     roi_max_y = roi_dimension[0] + roi_dimension[2]
                     roi_max_x = roi_dimension[1] + roi_dimension[3]
-                    
+
                     check_img = deepcopy(rgb_img)
                     cv2.rectangle(check_img, pt1=(roi_min_x,roi_max_y), pt2=(roi_max_x,roi_min_y), color=(0,0,255), thickness=2)
                     cv2.imwrite(save_check, check_img)
@@ -396,7 +396,7 @@ if __name__ == "__main__":
                     with open(filename, "w") as f:
                         f.write(xml)
                     f.close()
-                                        
+
     # # img_counter = data_generation(target_obj_rgbs,target_obj_masks,target_obj_labels,target_obj_countour_points,target_obj_roi_dimensions,1,200,0)
     # # img_counter = data_generation(target_obj_rgbs,target_obj_masks,target_obj_labels,target_obj_countour_points,target_obj_roi_dimensions,2,200,img_counter)
     # # img_counter = data_generation(target_obj_rgbs,target_obj_masks,target_obj_labels,target_obj_countour_points,target_obj_roi_dimensions,3,200,img_counter)
@@ -414,7 +414,7 @@ if __name__ == "__main__":
     # if max_aug_obj_num >= 3:
     #     img_counter = data_generation(target_obj_rgbs,target_obj_masks,target_obj_labels,target_obj_countour_points,target_obj_roi_dimensions,3,400,img_counter)
     img_counter = data_generation(target_obj_rgbs,target_obj_masks,target_obj_labels,target_obj_countour_points,target_obj_roi_dimensions,aug_obj_num,1000,image_counter)
-    
+
     # save class_names.text
     f = open(class_txt_file, 'w')
     f.write('_background_\n')

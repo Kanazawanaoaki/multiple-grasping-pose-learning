@@ -23,7 +23,7 @@ def check_and_make_dir(dir_path):
     if False == os.path.exists(dir_path):
         os.makedirs(dir_path)
         print("make dir in path: {}".format(dir_path))
-            
+
 def dataset_generate(rgb_img,pil_img,mask_img,label):
     global image_counter
     suffix = "frame%04d.jpg" %image_counter
@@ -78,13 +78,13 @@ def dataset_generate(rgb_img,pil_img,mask_img,label):
     width  = max_x - min_x
     roi_dimension  = [min_y,min_x,height,width]
     target_obj = rgb_img[min_y:max_y,min_x:max_x]
-    target_obj_mask = mask_img[min_y:max_y,min_x:max_x]    
+    target_obj_mask = mask_img[min_y:max_y,min_x:max_x]
 
     roi_min_y = roi_dimension[0]
     roi_min_x = roi_dimension[1]
     roi_max_y = roi_dimension[0] + roi_dimension[2]
     roi_max_x = roi_dimension[1] + roi_dimension[3]
-    
+
     check_img = rgb_img
     cv2.rectangle(check_img, pt1=(roi_min_x,roi_max_y), pt2=(roi_max_x,roi_min_y), color=(0,0,255), thickness=2)
     cv2.imwrite(save_check, check_img)
@@ -118,7 +118,7 @@ def dataset_generate(rgb_img,pil_img,mask_img,label):
     with open(filename, "w") as f:
         f.write(xml)
     f.close()
-    
+
 if __name__ == "__main__":
     target_data_path = sys.argv[sys.argv.index("-t") + 1] if "-t" in sys.argv else "../dataset/robot_depth_filter/target"
     save_data_path = sys.argv[sys.argv.index("-r") + 1] if "-r" in sys.argv else "../dataset/segmenntation_test/rembg_and_mask_test"
