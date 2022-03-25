@@ -70,24 +70,24 @@
 
 ;; kanazawa devel
 (defun save_data ()
-  ;; (let (res)
-  (setq req (instance std_srvs::TriggerRequest :init))
-  (setq res (ros::service-call "after_stow_data_collection/save_request" req t))
-  (format t "data saved! ~%")    
-    ;; )
+  (let (res)
+    (setq req (instance std_srvs::TriggerRequest :init))
+    (setq res (ros::service-call "after_stow_data_collection/save_request" req t))
+    (format t "data saved! ~%")
     )
+  )
 
 (defun save_data_wait ()
-  ;; (let (res)
-  (setq save-flag nil)
-  (until save-flag
-	 (setq req (instance std_srvs::TriggerRequest :init))
-	 (setq res (ros::service-call "after_stow_data_collection/save_request" req t))
-	 (if (send res :success)
-	     (setq save-flag t)
-	   ))
-  (format t "data saved! ~%")
-  ;; )
+  (let (res)
+    (setq save-flag nil)
+    (until save-flag
+           (setq req (instance std_srvs::TriggerRequest :init))
+           (setq res (ros::service-call "after_stow_data_collection/save_request" req t))
+           (if (send res :success)
+               (setq save-flag t)
+             ))
+    (format t "data saved! ~%")
+    )
   )
 
 (defun dissoc-rcup ()
@@ -105,7 +105,7 @@
     (send local-cds :dissoc *rcup*)
     )
   (send *viewer* :draw-objects)
-  (send (send *robot* :rarm :end-coords) :assoc *rcup*)  
+  (send (send *robot* :rarm :end-coords) :assoc *rcup*)
   )
 
 (defun receive-object ()
@@ -117,12 +117,12 @@
 	:revert-if-fail nil)
   (send *ri* :angle-vector (send *robot* :angle-vector) 4000)
   (send *ri* :wait-interpolation)
-  
+
   (send *ri* :stop-grasp :rarm :wait t)
   (send *ri* :speak-jp "物体を握らせて下さい")
   (unix:sleep 2)
   (send *ri* :start-grasp :rarm :wait t)
-  
+
   ;; (assoc-rcup)
   )
 
@@ -206,13 +206,13 @@
   end-flag
   )
 
-(defun look-around-larm (deg)
+(defun look-around-larm (deg &key(axis :x))
   (send *co* :newcoords (send (send *pr2* :larm :end-coords) :copy-worldcoords))
-  (send *co* :rotate (deg2rad deg) :x)
+  (send *co* :rotate (deg2rad deg) axis)
   (send *robot* :larm :inverse-kinematics
-	*co*
+        *co*
         :rotation-axis t
-	:revert-if-fail nil)
+        :revert-if-fail nil)
   (send *ri* :angle-vector (send *robot* :angle-vector) 4000)
   (send *ri* :wait-interpolation)
   )
@@ -231,7 +231,7 @@
 
 (defun look-around-larm-data-collection (&key (speak t))
   (receive-object-larm)
-  
+
   (if speak
       (send *ri* :speak-jp "データ収集を開始します"))
   (dotimes (i 8)
@@ -255,7 +255,7 @@
            (save_data)
            )
          (send *ri* :speak-jp (format nil "~Aのデータ収集を終了しました" *obj-name*))
-         (return-object-larm)         
+         (return-object-larm)
          (setq *end-flag* (ask-end))
          )
   (send *ri* :speak-jp "データ収集を終了します．ご協力ありがとうございました")
@@ -277,8 +277,16 @@
            (save_data_wait)
            )
          ;; (send *ri* :speak-jp (format nil "~Aのデータ収集を終了しました" *obj-name*))
+
+         ;; ここに他の角度も追加したい．
+         (dotimes (i 8)
+           (look-around-larm -45 :axis :y)
+           (unix:sleep 1);; 念の為
+           ;; (save_data)
+           (save_data_wait)
+           )
          (send *ri* :speak-jp "物体のデータ収集を終了しました")
-	 (unix:sleep 2)
+         (unix:sleep 2)
          (return-object-larm)
          (setq *end-flag* (ask-end))
          )
