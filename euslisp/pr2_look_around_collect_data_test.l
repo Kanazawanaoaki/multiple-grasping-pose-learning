@@ -137,7 +137,7 @@
   (send *ri* :wait-interpolation)
   )
 
-(defun receive-object-larm ()
+(defun defalut-larm ()
   (send *co* :newcoords (make-coords :pos #f(578.018 60.941 1066.015) :rpy #f(-0.839 -0.613 0.499)))
   (send *robot* :larm :inverse-kinematics
         *co*
@@ -145,6 +145,10 @@
 	:revert-if-fail nil)
   (send *ri* :angle-vector (send *robot* :angle-vector) 4000)
   (send *ri* :wait-interpolation)
+  )
+
+(defun receive-object-larm ()
+  (defalut-larm)
 
   (send *ri* :stop-grasp :larm :wait t)
   (send *ri* :speak-jp "物体を握らせて下さい")
@@ -279,12 +283,28 @@
          ;; (send *ri* :speak-jp (format nil "~Aのデータ収集を終了しました" *obj-name*))
 
          ;; ここに他の角度も追加したい．
-         (dotimes (i 8)
+         (dotimes (i 4)
            (look-around-larm -45 :axis :y)
            (unix:sleep 1);; 念の為
            ;; (save_data)
            (save_data_wait)
            )
+         (defalut-larm)
+         (dotimes (i 4)
+           (look-around-larm -45 :axis :z)
+           (unix:sleep 1);; 念の為
+           ;; (save_data)
+           (save_data_wait)
+           )
+         (defalut-larm)
+         (dotimes (i 4)
+           (look-around-larm 45 :axis :z)
+           (unix:sleep 1);; 念の為
+           ;; (save_data)
+           (save_data_wait)
+           )
+         (defalut-larm)
+
          (send *ri* :speak-jp "物体のデータ収集を終了しました")
          (unix:sleep 2)
          (return-object-larm)
