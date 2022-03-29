@@ -490,17 +490,17 @@
   (setq rec-list (list))
   (ros::rate 10)
   (until *ok-flag*
-	 (send *robot* :angle-vector (send *ri* :state :potentio-vector))
-	 (setq now-rav (send *robot* :rarm :angle-vector))
-	 (setq now-rec (send (send *robot* :rarm :end-coords) :copy-worldcoords))
-	 (format t "now rav : ~A" now-rav)
-	 (setq rav-list (append rav-list (list now-rav)))
-	 (setq rec-list (append rec-list (list now-rec)))
-	 ;; todo also save times ?
+         (send *robot* :angle-vector (send *ri* :state :potentio-vector))
+         (setq now-rav (send *robot* :rarm :angle-vector))
+         (setq now-rec (send (send *robot* :rarm :end-coords) :copy-worldcoords))
+         (format t "now rav : ~A" now-rav)
+         (setq rav-list (append rav-list (list now-rav)))
+         (setq rec-list (append rec-list (list now-rec)))
+         ;; todo also save times ?
          (ros::spin-once)
          (ros::sleep)
-	 )
-  
+         )
+
   (send *ri* :speak-jp "ありがとうございます")
   (manequine-end)
   (setq rav-length (length rav-list))
@@ -517,7 +517,7 @@
         :rotation-axis t
 	:revert-if-fail nil)
   (send *ri* :angle-vector (send *robot* :angle-vector) 4000)
-  (send *ri* :wait-interpolation) 
+  (send *ri* :wait-interpolation)
 
   (send *ri* :stop-grasp :rarm :wait t)
   

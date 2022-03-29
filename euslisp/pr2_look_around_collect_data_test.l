@@ -199,16 +199,17 @@
   )
 
 (defun ask-end ()
-  (send *ri* :speak-jp "データ収集を修了しますか？")
-  (dialogue-func)
-  (setq ask-ans *voice-data*)
-  (if (equal ask-ans '("はい"))
-      (setq end-flag t)
-    (setq end-flag nil)
-    )
-  (send *ri* :speak-jp "了解しました")
-  end-flag
-  )
+  (let (end-flag)
+    (send *ri* :speak-jp "データ収集を終了しますか？")
+    (dialogue-func)
+    (setq ask-ans *voice-data*)
+    (if (equal ask-ans '("はい"))
+        (setq end-flag t)
+      (setq end-flag nil)
+      )
+    (send *ri* :speak-jp "了解しました")
+    end-flag
+    ))
 
 (defun look-around-larm (deg &key(axis :x))
   (send *co* :newcoords (send (send *pr2* :larm :end-coords) :copy-worldcoords))
