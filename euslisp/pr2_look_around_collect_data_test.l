@@ -12,11 +12,11 @@
 
 (defun setup()
   (load "package://pr2eus/pr2-interface.l")
-  (load "package://multiple_grasping_pose_learning/euslisp/model/red-cup.l")  
-  (load "package://multiple_grasping_pose_learning/euslisp/pr2_utils.l")  
+  (load "package://multiple_grasping_pose_learning/euslisp/model/red-cup.l")
+  (load "package://multiple_grasping_pose_learning/euslisp/pr2_utils.l")
   (pr2-init)
   (setq *robot* *pr2*)
-  (setq *co* (make-coords))  
+  (setq *co* (make-coords))
   (setq *rcup* (red-cup))
   (objects (list *robot* *co* *rcup*))
   )
@@ -27,7 +27,7 @@
 	get-table-pose-srv
 	obj-pose-res
 	pose)
-    
+
     (setq get-obj-pose-srv (instance multiple_grasping_pose_learning::gettableposeRequest :init
 				    :command "from euslisp"))
     (setq obj-pose-res (ros::service-call
@@ -43,7 +43,7 @@
 	get-obj-pose-srv
 	obj-pose-res
 	)
-    
+
     (setq empty-srv (instance std_srvs::EmptyRequest :init))
     (setq obj-pose-res (ros::service-call
 			"aero_new_image_collection"
@@ -56,7 +56,7 @@
 	get-obj-pose-srv
 	obj-pose-res
 	)
-    
+
     (setq empty-srv (instance std_srvs::EmptyRequest :init))
     (setq obj-pose-res (ros::service-call
 			"aero_new_single_rgb_image_collection"
@@ -138,7 +138,8 @@
   )
 
 (defun defalut-larm ()
-  (send *co* :newcoords (make-coords :pos #f(578.018 60.941 1066.015) :rpy #f(-0.839 -0.613 0.499)))
+  ;; (send *co* :newcoords (make-coords :pos #f(578.018 60.941 1066.015) :rpy #f(-0.839 -0.613 0.499)))
+  (send *co* :newcoords (make-coords :pos #f(600 10 1100) :rpy #f(-0.839 -0.613 0.499)))
   (send *robot* :larm :inverse-kinematics
         *co*
         :rotation-axis t
@@ -199,16 +200,17 @@
   )
 
 (defun ask-end ()
-  (send *ri* :speak-jp "データ収集を修了しますか？")
-  (dialogue-func)
-  (setq ask-ans *voice-data*)
-  (if (equal ask-ans '("はい"))
-      (setq end-flag t)
-    (setq end-flag nil)
-    )
-  (send *ri* :speak-jp "了解しました")
-  end-flag
-  )
+  (let (end-flag)
+    (send *ri* :speak-jp "データ収集を終了しますか？")
+    (dialogue-func)
+    (setq ask-ans *voice-data*)
+    (if (equal ask-ans '("はい"))
+        (setq end-flag t)
+      (setq end-flag nil)
+      )
+    (send *ri* :speak-jp "了解しました")
+    end-flag
+    ))
 
 (defun look-around-larm (deg &key(axis :x))
   (send *co* :newcoords (send (send *pr2* :larm :end-coords) :copy-worldcoords))
@@ -265,7 +267,7 @@
   (send *ri* :speak-jp "データ収集を終了します．ご協力ありがとうございました")
   )
 
-(defun look-around-larm-data-collection-all ()
+(defun look-around-larm-data-collection-all (&key (save_data_flag t))
   (setq *end-flag* nil)
   (setq *obj-cnt* 1)
   (send *ri* :speak-jp "データ収集を開始します")
@@ -276,32 +278,44 @@
          (send *ri* :speak-jp "物体のデータ収集を開始します")
          (dotimes (i 8)
            (look-around-larm 45)
-           (unix:sleep 1);; 念の為
-           ;; (save_data)
-           (save_data_wait)
+           (if save_data_flag
+               (progn
+                 (unix:sleep 1);; 念の為
+                 ;; (save_data)
+                 (save_data_wait)
+                 ))
            )
          ;; (send *ri* :speak-jp (format nil "~Aのデータ収集を終了しました" *obj-name*))
 
          ;; ここに他の角度も追加したい．
          (dotimes (i 4)
            (look-around-larm -45 :axis :y)
-           (unix:sleep 1);; 念の為
-           ;; (save_data)
-           (save_data_wait)
+           (if save_data_flag
+               (progn
+                 (unix:sleep 1);; 念の為
+                 ;; (save_data)
+                 (save_data_wait)
+                 ))
            )
          (defalut-larm)
-         (dotimes (i 4)
+         (dotimes (i 2)
            (look-around-larm -45 :axis :z)
-           (unix:sleep 1);; 念の為
-           ;; (save_data)
-           (save_data_wait)
+           (if save_data_flag
+               (progn
+                 (unix:sleep 1);; 念の為
+                 ;; (save_data)
+                 (save_data_wait)
+                 ))
            )
          (defalut-larm)
-         (dotimes (i 4)
+         (dotimes (i 2)
            (look-around-larm 45 :axis :z)
-           (unix:sleep 1);; 念の為
-           ;; (save_data)
-           (save_data_wait)
+           (if save_data_flag
+               (progn
+                 (unix:sleep 1);; 念の為
+                 ;; (save_data)
+                 (save_data_wait)
+                 ))
            )
          (defalut-larm)
 

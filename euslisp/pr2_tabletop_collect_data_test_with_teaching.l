@@ -10,10 +10,10 @@
 
 (defun setup()
   (load "package://pr2eus/pr2-interface.l")
-  (load "package://multiple_grasping_pose_learning/euslisp/model/red-cup.l")  
+  (load "package://multiple_grasping_pose_learning/euslisp/model/red-cup.l")
   (pr2-init)
   (setq *robot* *pr2*)
-  (setq *co* (make-coords))  
+  (setq *co* (make-coords))
   (setq *rcup* (red-cup))
   (objects (list *robot* *co* *rcup*))
   )
@@ -24,7 +24,7 @@
 	get-table-pose-srv
 	obj-pose-res
 	pose)
-    
+
     (setq get-obj-pose-srv (instance multiple_grasping_pose_learning::gettableposeRequest :init
 				    :command "from euslisp"))
     (setq obj-pose-res (ros::service-call
@@ -518,16 +518,16 @@
   (setq rec-list (list))
   (ros::rate 10)
   (until *ok-flag*
-	 (send *robot* :angle-vector (send *ri* :state :potentio-vector))
-	 (setq now-rav (send *robot* :rarm :angle-vector))
-	 (setq now-rec (send (send *robot* :rarm :end-coords) :copy-worldcoords))
-	 (format t "now rav : ~A" now-rav)
-	 (setq rav-list (append rav-list (list now-rav)))
-	 (setq rec-list (append rec-list (list now-rec)))
-	 ;; todo also save times ?
+         (send *robot* :angle-vector (send *ri* :state :potentio-vector))
+         (setq now-rav (send *robot* :rarm :angle-vector))
+         (setq now-rec (send (send *robot* :rarm :end-coords) :copy-worldcoords))
+         (format t "now rav : ~A" now-rav)
+         (setq rav-list (append rav-list (list now-rav)))
+         (setq rec-list (append rec-list (list now-rec)))
+         ;; todo also save times ?
          (ros::spin-once)
          (ros::sleep)
-	 )
+         )
 
   (send *ri* :speak-jp "ありがとうございます")
   (manequine-end)
