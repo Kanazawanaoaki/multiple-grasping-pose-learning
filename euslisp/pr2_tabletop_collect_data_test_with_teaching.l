@@ -53,7 +53,7 @@
 	get-obj-pose-srv
 	obj-pose-res
 	)
-    
+
     (setq empty-srv (instance std_srvs::EmptyRequest :init))
     (setq obj-pose-res (ros::service-call
 			"aero_new_single_rgb_image_collection"
@@ -243,7 +243,7 @@
   (setq *initial-av* (send *robot* :angle-vector))
   (unix:sleep 2)
   (send *ri* :start-grasp :rarm :wait t) ;; TODO 持つ強さ？
-  
+
   ;; TODO この物体は何ですか？
   )
 
@@ -257,7 +257,7 @@
           (setq *ok-flag* t)
           )
       (format t "data: ~A ~%" *data*)
-      ) 
+      )
     )
   )
 
@@ -266,8 +266,12 @@
   (format t "data dumped in ~A ~%" file_name)
   )
 
-(defun load-from-file (&key (file_name "tmp-teaching-data.l"))
+(defun load-from-file (&key (file_name "tmp-teaching-data.l") (summarize t) (thre 0.5))
   (load file_name)
+  ;; summarize rav-list data if summarize t
+  (if summarize
+      (summarize-datas :thre thre)
+    )
   (format t "data loaded from ~A ~%" file_name)
   (format t "no-obj-l-gri : ~A ~%" *no-obj-l-gri*)
   (format t "obj-l-gri : ~A ~%" *obj-l-gri*)
@@ -275,6 +279,30 @@
   (format t "place-short-rav-list size : ~A ~%" (length *place-short-rav-list*))
   (format t "release-short-rav-list size : ~A ~%" (length *release-short-rav-list*))
   (format t "pick-short-rav-list size : ~A ~%" (length *pick-short-rav-list*))
+  )
+
+(defun summarize-rav (rav-list &key (threshold 0.1))
+  (let (ans-list rec-list)
+    (setq rec-list (rav2rec rav-list))
+    (setq ans-list (list (elt rav-list 0)))
+    (setq now-index 0)
+    (dotimes (i (- (length rav-list) 1))
+      ;; ans-listの最後とindex i+1の距離がthreshold以上ならappendする
+      (setq now-distance (distance (send (elt rec-list now-index) :worldpos) (send (elt rec-list (+ i 1)) :worldpos)))
+      (format t "now distance is : ~A~%" now-distance)
+      (if (> now-distance threshold)
+          (progn
+            (setq ans-list (append ans-list (list (elt rav-list (+ i 1)))))
+            (setq now-index (+ i 1))
+            )
+        ))
+    (format t "rav-list length : ~A, summarize-rav-list lenght : ~A~%" (length rav-list) (length ans-list))
+    ans-list))
+
+(defun summarize-datas (&key (thre 0.5))
+  (setq *place-short-rav-list* (summarize-rav *place-short-rav-list* :threshold thre))
+  (setq *release-short-rav-list* (summarize-rav *release-short-rav-list* :threshold thre))
+  (setq *pick-short-rav-list* (summarize-rav *pick-short-rav-list* :threshold thre))
   )
 
 (defun rav2rec (rav-list)
@@ -382,7 +410,7 @@
   (send *robot* :angle-vector (send *ri* :state :potentio-vector))
   (setq now-head-y (send *robot* :head-neck-y :joint-angle))
   (setq now-head-p (send *robot* :head-neck-p :joint-angle))
-  
+
   (setq avs (list))
   (setq tms (list))
   (dolist (av rav-list)
@@ -397,7 +425,7 @@
     (setq tms (append tms (list time)))
     )
   (send *ri* :angle-vector-sequence avs tms)
-  (send *ri* :wait-interpolation)  
+  (send *ri* :wait-interpolation)
   )
 
 (defun replay-short-rav-list (rav-list)
@@ -500,7 +528,7 @@
          (ros::spin-once)
          (ros::sleep)
 	 )
-  
+
   (send *ri* :speak-jp "ありがとうございます")
   (manequine-end)
   (setq rav-length (length rav-list))
@@ -517,10 +545,10 @@
         :rotation-axis t
 	:revert-if-fail nil)
   (send *ri* :angle-vector (send *robot* :angle-vector) 4000)
-  (send *ri* :wait-interpolation) 
+  (send *ri* :wait-interpolation)
 
   (send *ri* :stop-grasp :rarm :wait t)
-  
+
   ;; 待つ
   (manequine-mode :arm (list "rarm") :start t)
   (do-until-key
@@ -532,7 +560,7 @@
   (manequine-end)
   (send *robot* :angle-vector (send *ri* :state :potentio-vector))
   (setq *initial-av* (send *robot* :angle-vector))
-  (send *ri* :start-grasp :rarm :wait t) ;; TODO 持つ強さ？  
+  (send *ri* :start-grasp :rarm :wait t) ;; TODO 持つ強さ？
   )
 
 (defun place-object-teaching ()
@@ -771,6 +799,10 @@
 
   ;; 教わった動作を再生する
   (send *ri* :speak-jp "教わった動作を実行します")
+  ;; summarize rav-list data if summarize t
+  (if summarize
+      (summarize-datas :thre 0.5)
+    )
   (short-replay-test)
 
   (send *robot* :rarm :move-end-pos #f(0 0 100) :world)
@@ -780,9 +812,14 @@
   (send *ri* :speak-jp "動作を実行しました")
   )
 
-(defun short-data-test (&key (times 10) (save_img nil) (save_avs t))
+(defun short-data-test (&key (times 10) (save_img nil) (save_avs t) (summarize t) (thre 0.5))
   ;; 道具を持たせて貰う
   (receive-object)
+
+  ;; summarize rav-list data if summarize t
+  (if summarize
+      (summarize-datas :thre thre)
+    )
 
   ;; rav2rec
   (setq *place-short-rec-list* (rav2rec *place-short-rav-list*))
@@ -806,15 +843,16 @@
     ;; (send *obj-coords* :rotate (deg2rad 10) :z :world)
     (setq *ik-ok-flag* nil)
     (until *ik-ok-flag*
-	   (send *obj-coords* :newcoords (random-coords *initial-obj-coords* :x 50 :y 100 :theta 30))
-	   (format t "x-num: ~A y-num: ~A theta-num: ~A ~%" *x-num* *y-num* *theta-num*)
-	   (setq ik-place-flag (ik-check *place-assoc-short-rec-list*))
-	   (setq ik-release-flag (ik-check *release-assoc-short-rec-list*))
-	   (setq ik-pick-flag (ik-check *pick-assoc-short-rec-list*))
-	   (if (and ik-place-flag ik-release-flag ik-pick-flag)
-	       (setq *ik-ok-flag* t)
-	       )
-	   )
+           ;; (send *obj-coords* :newcoords (random-coords *initial-obj-coords* :x 50 :y 100 :theta 30))
+           (send *obj-coords* :newcoords (random-coords *initial-obj-coords* :x 50 :y 50 :theta 0)) ;; for easy
+           (format t "x-num: ~A y-num: ~A theta-num: ~A ~%" *x-num* *y-num* *theta-num*)
+           (setq ik-place-flag (ik-check *place-assoc-short-rec-list*))
+           (setq ik-release-flag (ik-check *release-assoc-short-rec-list*))
+           (setq ik-pick-flag (ik-check *pick-assoc-short-rec-list*))
+           (if (and ik-place-flag ik-release-flag ik-pick-flag)
+               (setq *ik-ok-flag* t)
+             )
+           )
 
     ;; (if save_avs
     ;; 	(start-data-collection :service "place_data_collection_rosbag/start_request");; 置く時のデータ収集
@@ -834,7 +872,7 @@
     (set-initial-av)
     (set-look-pose)
     (if save_img
-	(save_data_wait)
+        (save_data_wait)
       )
 
     ;; 道具を掴む
@@ -843,13 +881,15 @@
 
     ;; 掴む時のデータ収集
     (if save_avs
-	(start-data-collection :service "pick_data_collection_rosbag/start_request")
-      )
+        (progn
+        (start-data-collection :service "pick_data_collection_rosbag/start_request")
+        (start-data-collection :service "pick_long_data_collection_rosbag/start_request")
+        ))
     (unix:sleep 4)
     (replay-short-rec-list *pick-assoc-short-rec-list*)
     ;; 掴む時のデータ収集
     (if save_avs
-	(end-data-collection :service "pick_data_collection_rosbag/end_request")
+        (end-data-collection :service "pick_data_collection_rosbag/end_request")
       )
 
     (send *ri* :start-grasp :rarm :wait t)
@@ -858,15 +898,18 @@
     (send *robot* :rarm :move-end-pos #f(0 0 100) :world)
     (send *ri* :angle-vector (send *robot* :angle-vector))
     (send *ri* :wait-interpolation)
+    (if save_avs
+        (end-data-collection :service "pick_long_data_collection_rosbag/end_request")
+      )
     (set-initial-av)
 
     (setq *grasp-fail-flag* nil)
     (grasp-fail-check *no-obj-l-gri* *obj-l-gri*)
     (if *grasp-fail-flag*
-	(progn
-	  (send *ri* :speak-jp "物体の把持に失敗したので助けて下さい")
-	  (ok-wait)
-	  )
+        (progn
+          (send *ri* :speak-jp "物体の把持に失敗したので助けて下さい")
+          (ok-wait)
+          )
       )
     )
   (send *ri* :speak-jp "自動のデータ収集が終了しました")
