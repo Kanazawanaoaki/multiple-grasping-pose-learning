@@ -32,7 +32,7 @@ def changedSV(bgr_img, alpha, beta, color_idx):
     return cv2.cvtColor(hsv8,cv2.COLOR_HSV2BGR_FULL)
 
 
-def data_generation(rgbs,masks,labels,countour_points,roi_dimensions,num_objs,num_data,img_counter):
+def data_generation(rgbs, masks, labels, countour_points, roi_dimensions, num_objs, num_data, img_counter, hsv_brightness):
     image_counter = img_counter
     for data_id in range(num_data):
         #randomly choose a background
@@ -176,7 +176,7 @@ def data_generation(rgbs,masks,labels,countour_points,roi_dimensions,num_objs,nu
         ## randomize data by adjusting hsv
         hsv_image = cv2.cvtColor(random_background, cv2.COLOR_BGR2HSV)
         hsvf = hsv_image.astype(np.float32)
-        hsvf[:,:,2] = np.clip(hsvf[:,:,2] * (1.0 + np.random.randint(-10, 10) / 100.0), 0, 255)
+        hsvf[:,:,2] = np.clip(hsvf[:,:,2] * (1.0 + np.random.randint(hsv_brightness, 10) / 100.0), 0, 255)
         hsv8 = hsvf.astype(np.uint8)
         random_background = cv2.cvtColor(hsv8,cv2.COLOR_HSV2BGR)
 
@@ -250,6 +250,7 @@ if __name__ == "__main__":
     augmented_data_path = sys.argv[sys.argv.index("-a") + 1] if "-a" in sys.argv else "../dataset/aug_data"
     mask_name = sys.argv[sys.argv.index("-m") + 1] if "-m" in sys.argv else "robot_mask"
     aug_obj_num = int(sys.argv[sys.argv.index("-n") + 1]) if "-n" in sys.argv else 3
+    hsv_brightness = int(sys.argv[sys.argv.index("-hb") + 1]) if "-hb" in sys.argv else -10
     background_imgs = []
     image_counter=0
 
@@ -413,7 +414,7 @@ if __name__ == "__main__":
     #     img_counter = data_generation(target_obj_rgbs,target_obj_masks,target_obj_labels,target_obj_countour_points,target_obj_roi_dimensions,2,300,img_counter)
     # if max_aug_obj_num >= 3:
     #     img_counter = data_generation(target_obj_rgbs,target_obj_masks,target_obj_labels,target_obj_countour_points,target_obj_roi_dimensions,3,400,img_counter)
-    img_counter = data_generation(target_obj_rgbs,target_obj_masks,target_obj_labels,target_obj_countour_points,target_obj_roi_dimensions,aug_obj_num,1000,image_counter)
+    img_counter = data_generation(target_obj_rgbs, target_obj_masks, target_obj_labels, target_obj_countour_points, target_obj_roi_dimensions, aug_obj_num, 1000, image_counter, hsv_brightness)
 
     # save class_names.text
     f = open(class_txt_file, 'w')

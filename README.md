@@ -54,6 +54,11 @@ pipeline.configはコピペする．
 ```
 python3 check_annotation_bbox_pr2_look_around.py -t ../dataset/robot_depth_filter/target -c ../dataset/check_data -m multiply_mask
 ```
+rembgとself-filerのかけ合わせたmaskを作って，それでdata augmentationをする．
+```
+python3 data_augmentation_mask_with_rembg_and_self_pr2_data.py -t ../dataset/rembg_and_mask_with_collision_check/20220311-for-rembg-datas/ -b ../dataset/background/pr2/pr2_20220311/20220311_all/ -a ../dataset/rembg_and_mask_with_collision_check/20220526-test/20220311-for-rembg-datas-bg20220311_all-n10-hb-10-test -n 10 -hb -10
+```
+これで作ったものは，rgbをtrainとtestにして，そのまま[この手順](https://gist.github.com/fanshi14/cf0b0bc5b6fa1299617c65a46dedd6a7 )の一部に従って学習できる．
 
 ### learning from dataset
 please edit your `DLBOX_IP` in `train_object_detection_dlbox.sh first`
