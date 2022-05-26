@@ -1,9 +1,10 @@
 <launch>
   <arg name="run_rviz" default="false" />
 
-  <include file="$(find multiple_grasping_pose_learning)/launch/pr2/pr2_tabletop_mask.launch"/>
-  
-  <include file="$(find multiple_grasping_pose_learning)/launch/pr2/pr2_data_collection_server_tabletop.launch">
+  <include file="$(find multiple_grasping_pose_learning)/launch/pr2/pr2_data_collection_server_tabletop.launch" />
+
+  <include file="$(find multiple_grasping_pose_learning)/launch/pr2/pr2_tabletop_mask.launch">
     <arg name="run_rviz" value="$(arg run_rviz)" />
   </include>
+
 </launch>
